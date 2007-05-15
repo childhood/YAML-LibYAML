@@ -1,4 +1,8 @@
 ---
+version: 0.02
+date:    Mon May 14 23:27:17 PDT 2007
+changes: Implement initial Dump function. Now supports basic Dump and Load.
+---
 version: 0.01
 date:    Fri May 11 14:08:54 PDT 2007
 changes: First Version. Very alpha. Not for production!

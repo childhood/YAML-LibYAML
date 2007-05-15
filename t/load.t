@@ -1,4 +1,4 @@
-use t::TestYAML tests => 4;
+use t::TestYAML tests => 5;
 
 spec_file('t/data/1.t');
 filters {

@@ -2,7 +2,7 @@ package YAML::LibYAML;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
@@ -14,7 +14,7 @@ sub Load {
 }
 
 sub Dump {
-    die "Error - LibYAML::Dump not yet implemented... :(\n";
+#     die "Error - LibYAML::Dump not yet implemented... :(\n";
     return YAML::LibYAML::XS::Dump(@_);
 }
 
@@ -43,9 +43,8 @@ offer Perl the best YAML support to date.
 This module exports the functions C<Dump> and C<Load>. These functions
 are intended to work exactly like C<YAML.pm>'s corresponding functions.
 
-NOTE: In this very early proof-of-concept release, C<Dump> is not yet
-implemented, and C<Load> only works for unblessed hashes, arrays, and
-scalars, without reference aliases.
+NOTE: This very early proof-of-concept release only works for unblessed
+hashes, arrays, and scalars, without reference aliases.
 
 This work should progress quickly so check back often.
 

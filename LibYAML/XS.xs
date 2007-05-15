@@ -16,3 +16,8 @@ Load (yaml_str)
         Load(yaml_str);
         return;
 
+SV *
+Dump (dummy, ...)
+        SV * dummy
+
+

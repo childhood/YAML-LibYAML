@@ -24,6 +24,7 @@ LibYAML/lib/YAML/LibYAML/XS.pm
 LibYAML/Makefile.PL
 LibYAML/parser.c
 LibYAML/perl_libyaml.c
+LibYAML/ppport_sort.h
 LibYAML/reader.c
 LibYAML/scanner.c
 LibYAML/writer.c
@@ -35,5 +36,6 @@ MANIFEST			This list of files
 META.yml
 README
 t/data/1.t
+t/dump.t
 t/load.t
 t/TestYAML.pm

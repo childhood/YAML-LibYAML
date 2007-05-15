@@ -11,4 +11,4 @@ no_index:
 requires: 
   Class::Field: 0
   perl: 5.6.1
-version: 0.01
+version: 0.02

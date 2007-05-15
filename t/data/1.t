@@ -11,6 +11,37 @@ __DATA__
 "one",
 "two"
 ]
++++ libyaml_emit
+---
+- one
+- two
+
+=== List in List
++++ yaml
+---
+- one
+- - two
+  - three
+- [four, five]
++++ perl
+[
+"one",
+[
+"two",
+"three"
+],
+[
+"four",
+"five"
+]
+]
++++ libyaml_emit
+---
+- one
+- - two
+  - three
+- - four
+  - five
 
 === Very Simple Hash
 +++ yaml
@@ -20,6 +51,9 @@ one: two
 {
 "one" => "two"
 }
++++ libyaml_emit
+---
+one: two
 
 === Parse a more complicated structure
 +++ yaml
@@ -58,3 +92,8 @@ one: two
     "rank" => "yes",
     "serial number" => 42,
 }
++++ libyaml_emit
+---
+name: ingy
+rank: yes
+serial number: 42
