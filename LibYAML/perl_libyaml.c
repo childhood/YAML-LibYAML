@@ -5,10 +5,15 @@
 #include <yaml.h>
 #include <ppport_sort.h>
 
-SV* get_node(yaml_parser_t*);
-SV* handle_mapping(yaml_parser_t*, yaml_event_t*);
-SV* handle_sequence(yaml_parser_t*, yaml_event_t*);
-SV* handle_scalar(yaml_parser_t*, yaml_event_t*);
+typedef struct {
+    yaml_parser_t parser;
+    yaml_event_t event;
+} perl_yaml_loader_t;
+
+SV* get_node(perl_yaml_loader_t*);
+SV* handle_mapping(perl_yaml_loader_t*);
+SV* handle_sequence(perl_yaml_loader_t*);
+SV* handle_scalar(perl_yaml_loader_t*);
 
 void dump_document(yaml_emitter_t*, SV*);
 void dump_node(yaml_emitter_t*, SV*);
@@ -22,81 +27,81 @@ void* _die(char* msg) {
 }
 
 void Load(char* yaml_str) {
-    /* printf(">>> Load\n"); */
     dXSARGS; sp = mark;
-    yaml_parser_t parser;
-    yaml_event_t event;
+    perl_yaml_loader_t loader;
+    /*yaml_parser_t parser;
+    yaml_event_t event;*/
     SV* node;
-    yaml_parser_initialize(&parser);
+    yaml_parser_initialize(&loader.parser);
     yaml_parser_set_input_string(
-        &parser,
+        &loader.parser,
         (unsigned char *) yaml_str,
         strlen((char *) yaml_str)
     );
-    yaml_parser_parse(&parser, &event);
-    if (event.type != YAML_STREAM_START_EVENT)
+    yaml_parser_parse(&loader.parser, &loader.event);
+    if (loader.event.type != YAML_STREAM_START_EVENT)
         _die("Expected STREAM_START_EVENT");
-    while (event.type != YAML_STREAM_END_EVENT) {
-        yaml_parser_parse(&parser, &event);
-        if (event.type != YAML_DOCUMENT_START_EVENT)
-            _die("Expected DOCUMENT_START_EVENT");
-        node = get_node(&parser);
-        if (node) XPUSHs(node);
-        yaml_parser_parse(&parser, &event);
-        if (event.type != YAML_DOCUMENT_END_EVENT)
+    while (1) {
+        yaml_parser_parse(&loader.parser, &loader.event);
+        if (loader.event.type == YAML_STREAM_END_EVENT)
+            break;
+        node = get_node(&loader);
+        if (! node) break;
+        XPUSHs(node);
+        yaml_parser_parse(&loader.parser, &loader.event);
+        if (loader.event.type != YAML_DOCUMENT_END_EVENT)
             _die("Expected DOCUMENT_END_EVENT");
-        break;
     }
-    /* printf("okokok"); */
-    yaml_parser_parse(&parser, &event);
-    if (event.type != YAML_STREAM_END_EVENT)
-        _die("Expected STREAM_END_EVENT");
-    yaml_parser_delete(&parser);
+    if (loader.event.type != YAML_STREAM_END_EVENT) {
+        char* msg;
+        asprintf(&msg,
+            "Expected STREAM_END_EVENT; Got: %d != %d",
+            loader.event.type,
+            YAML_STREAM_END_EVENT
+        );
+        _die(msg);
+    }
+    yaml_parser_delete(&loader.parser);
     PUTBACK;
 }
 
-SV* get_node(yaml_parser_t * parser) {
+SV* get_node(perl_yaml_loader_t * loader) {
     SV* node;
     char* msg;
-    /* printf(">>> get_node\n"); */
-    yaml_event_t event;
-    yaml_parser_parse(parser, &event);
+    yaml_parser_parse(&loader->parser, &loader->event);
 
-    if (event.type == YAML_DOCUMENT_END_EVENT ||
-        event.type == YAML_MAPPING_END_EVENT ||
-        event.type == YAML_SEQUENCE_END_EVENT) return NULL;
-    node = (event.type == YAML_MAPPING_START_EVENT) ?
-        handle_mapping(parser, &event) :
-    (event.type == YAML_SEQUENCE_START_EVENT) ?
-        handle_sequence(parser, &event) :
-    (event.type == YAML_SCALAR_EVENT) ?
-        handle_scalar(parser, &event) :
+    if (loader->event.type == YAML_DOCUMENT_END_EVENT ||
+        loader->event.type == YAML_MAPPING_END_EVENT ||
+        loader->event.type == YAML_SEQUENCE_END_EVENT) return NULL;
+    node = (loader->event.type == YAML_MAPPING_START_EVENT) ?
+        handle_mapping(loader) :
+    (loader->event.type == YAML_SEQUENCE_START_EVENT) ?
+        handle_sequence(loader) :
+    (loader->event.type == YAML_SCALAR_EVENT) ?
+        handle_scalar(loader) :
     NULL;
     if (node) return node;
 
-    asprintf(&msg, "Invalid event '%d' at top level", (int) event.type);
+    asprintf(&msg, "Invalid event '%d' at top level", (int) loader->event.type);
     _die(msg);
 }
 
-SV* handle_sequence(yaml_parser_t * parser, yaml_event_t * event) {
+SV* handle_sequence(perl_yaml_loader_t * loader) {
     SV* node;
-    /* printf(">>> handle_sequence\n"); */
     AV* sequence = newAV();
-    while (node = get_node(parser)) {
+    while (node = get_node(loader)) {
         av_push(sequence, node);
     } 
-    /* printf("end of seq\n"); */
     return (SV*) newRV_noinc((SV*) sequence);
 }
 
-SV* handle_mapping(yaml_parser_t * parser, yaml_event_t * event) {
-    /* printf(">>> handle_mapping\n"); */
+SV* handle_mapping(perl_yaml_loader_t * loader) {
     HV* mapping = newHV();
     SV* key_node;
     SV* value_node;
-    while (key_node = get_node(parser)) {
+    while (key_node = get_node(loader)) {
         assert(SVPOK(key_node));
-        value_node = get_node(parser);
+        value_node = get_node(loader);
         hv_store(
             mapping, SvPV_nolen(key_node), sv_len(key_node), value_node, 0
         );
@@ -104,11 +109,10 @@ SV* handle_mapping(yaml_parser_t * parser, yaml_event_t * event) {
     return (SV*) newRV_noinc((SV*) mapping);
 }
 
-SV* handle_scalar(yaml_parser_t * parser, yaml_event_t * event) {
+SV* handle_scalar(perl_yaml_loader_t * loader) {
     char* msg;
-    asprintf(&msg, ">>> handle_scalar: %s\n", event->data.scalar.value);
-    /* printf(msg); */
-    return newSVpvf((char *) event->data.scalar.value);
+    asprintf(&msg, ">>> handle_scalar: %s\n", loader->event.data.scalar.value);
+    return newSVpvf((char *) loader->event.data.scalar.value);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -117,7 +121,7 @@ SV* Dump(SV * dummy, ...) {
     yaml_emitter_t emitter;
     yaml_event_t event_stream_start;
     yaml_event_t event_stream_end;
-    dXSARGS;
+    dXSARGS; sp = mark;
     int i;
     SV* yaml = newSVpvf("");
 
@@ -139,7 +143,8 @@ SV* Dump(SV * dummy, ...) {
     yaml_stream_end_event_initialize(&event_stream_end);
     yaml_emitter_emit(&emitter, &event_stream_end);
     yaml_emitter_delete(&emitter);
-    return yaml;
+    if (yaml) XPUSHs(yaml);
+    PUTBACK;
 }
 
 void dump_document(yaml_emitter_t * emitter, SV* node) {

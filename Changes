@@ -1,4 +1,17 @@
 ---
+version: 0.03
+date:    Mon May 14 23:27:17 PDT 2007
+changes: 
+- Fixed Dump call stack bugs reported by vhold. Made Dump work
+  like Load.
+- Made this very 'Changes' file loadable, and have a test to prove it.
+- As a result Load now handles a multiple document stream correctly. 
+- Added a 'loader' typedef to the C code. This is kinda like a self object for
+  the Loader and maybe I'll expose this to the Perl API at some point.
+- Made Dump and Load not be proxy subs from YAML::LibYAML to
+  YAML::LibYAML::XS. This removes one level of Perl sub calling which
+  should improve benchmarks.
+---
 version: 0.02
 date:    Mon May 14 23:27:17 PDT 2007
 changes: Implement initial Dump function. Now supports basic Dump and Load.

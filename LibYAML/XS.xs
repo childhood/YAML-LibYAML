@@ -16,8 +16,12 @@ Load (yaml_str)
         Load(yaml_str);
         return;
 
-SV *
+void
 Dump (dummy, ...)
         SV * dummy
+        PPCODE:
+        PL_markstack_ptr++;
+        Dump(dummy);
+        return;
 
 

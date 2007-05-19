@@ -1,22 +1,22 @@
+# ToDo:
+#
+# * Find out how to loop over all the args passed to a C function
+# * Find out how to write C macros
+# * Support ~, null, true, false
+# * Rewrite documentation
+# * Support blessed objects
+# * Copy all relevant code from YAML::Syck
+#
 package YAML::LibYAML;
-use 5.006001;
+use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
 
-require YAML::LibYAML::XS;
-
-sub Load {
-    return YAML::LibYAML::XS::Load(@_);
-}
-
-sub Dump {
-#     die "Error - LibYAML::Dump not yet implemented... :(\n";
-    return YAML::LibYAML::XS::Dump(@_);
-}
+use YAML::LibYAML::XS qw(Load Dump);
 
 1;
 
@@ -45,6 +45,9 @@ are intended to work exactly like C<YAML.pm>'s corresponding functions.
 
 NOTE: This very early proof-of-concept release only works for unblessed
 hashes, arrays, and scalars, without reference aliases.
+
+On the other hand, this module supports the full YAML syntax for these data
+types. There are no known bugs yet.
 
 This work should progress quickly so check back often.
 

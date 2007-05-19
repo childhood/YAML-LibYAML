@@ -5,6 +5,9 @@ use warnings;
 
 use XSLoader;
 XSLoader::load 'YAML::LibYAML::XS';
+use base 'Exporter';
+
+our @EXPORT_OK = qw(Load Dump);
 
 1;
 
