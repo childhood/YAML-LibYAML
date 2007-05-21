@@ -122,7 +122,7 @@ SV* handle_scalar(perl_yaml_loader_t * loader) {
     ) {
         return &PL_sv_undef;
     }
-    return newSVpvf(string);
+    return newSVpvn(string, strlen(string));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -133,7 +133,7 @@ SV* Dump(SV * dummy, ...) {
     yaml_event_t event_stream_end;
     dXSARGS; sp = mark;
     int i;
-    SV* yaml = newSVpvf("");
+    SV* yaml = newSVpvn("", 0);
 
     yaml_emitter_initialize(&dumper.emitter);
     yaml_emitter_set_width(&dumper.emitter, 2);

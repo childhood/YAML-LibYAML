@@ -7,11 +7,14 @@
 # * Support blessed objects
 # * Copy all relevant code from YAML::Syck
 #
+# Tests:
+# * http://svn.ali.as/cpan/concept/cpan-yaml-tiny/
+#
 package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);

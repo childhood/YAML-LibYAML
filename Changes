@@ -1,4 +1,9 @@
 ---
+version: 0.05
+date:    Mon May 21 00:14:40 PDT 2007
+changes: TonyC pointed out the error in my ways for using newSVpvf for
+  strings.
+---
 version: 0.04
 date:    Sat May 19 20:04:04 PDT 2007
 changes: 

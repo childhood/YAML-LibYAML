@@ -41,5 +41,6 @@ t/dump.t
 t/load-changes.t
 t/load.t
 t/null.t
+t/pvf_bug.t
 t/stackbug.t
 t/TestYAML.pm
