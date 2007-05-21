@@ -1,4 +1,11 @@
 ---
+version: 0.04
+date:    Sat May 19 20:04:04 PDT 2007
+changes: 
+- Added a typedef 'dumper' like 'loader'. Makes internals nicer and more
+  exposable.
+- Support dumping undef as ~ and "~" as '~', and loading them correctly.
+---
 version: 0.03
 date:    Mon May 14 23:27:17 PDT 2007
 changes: 

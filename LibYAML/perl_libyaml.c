@@ -10,16 +10,22 @@ typedef struct {
     yaml_event_t event;
 } perl_yaml_loader_t;
 
+typedef struct {
+    yaml_emitter_t emitter;
+    /* yaml_event_t event; */
+} perl_yaml_dumper_t;
+
 SV* get_node(perl_yaml_loader_t*);
 SV* handle_mapping(perl_yaml_loader_t*);
 SV* handle_sequence(perl_yaml_loader_t*);
 SV* handle_scalar(perl_yaml_loader_t*);
 
-void dump_document(yaml_emitter_t*, SV*);
-void dump_node(yaml_emitter_t*, SV*);
-void dump_hash(yaml_emitter_t*, SV*);
-void dump_array(yaml_emitter_t*, SV*);
-void dump_scalar(yaml_emitter_t*, SV*);
+void dump_document(perl_yaml_dumper_t*, SV*);
+void dump_node(perl_yaml_dumper_t*, SV*);
+void dump_hash(perl_yaml_dumper_t*, SV*);
+void dump_array(perl_yaml_dumper_t*, SV*);
+void dump_scalar(perl_yaml_dumper_t*, SV*);
+
 int append_output(SV *, unsigned char *, unsigned int size);
 
 void* _die(char* msg) {
@@ -110,25 +116,29 @@ SV* handle_mapping(perl_yaml_loader_t * loader) {
 }
 
 SV* handle_scalar(perl_yaml_loader_t * loader) {
-    char* msg;
-    asprintf(&msg, ">>> handle_scalar: %s\n", loader->event.data.scalar.value);
-    return newSVpvf((char *) loader->event.data.scalar.value);
+    char * string = (char *) loader->event.data.scalar.value;
+    if ((strcmp(string, "~") == 0) &&
+        (loader->event.data.scalar.style == YAML_PLAIN_SCALAR_STYLE)
+    ) {
+        return &PL_sv_undef;
+    }
+    return newSVpvf(string);
 }
 
 /* -------------------------------------------------------------------------- */
 
 SV* Dump(SV * dummy, ...) {
-    yaml_emitter_t emitter;
+    perl_yaml_dumper_t dumper;
     yaml_event_t event_stream_start;
     yaml_event_t event_stream_end;
     dXSARGS; sp = mark;
     int i;
     SV* yaml = newSVpvf("");
 
-    yaml_emitter_initialize(&emitter);
-    yaml_emitter_set_width(&emitter, 2);
+    yaml_emitter_initialize(&dumper.emitter);
+    yaml_emitter_set_width(&dumper.emitter, 2);
     yaml_emitter_set_output(
-        &emitter,
+        &dumper.emitter,
         (yaml_write_handler_t *) &append_output,
         yaml
     );
@@ -136,38 +146,38 @@ SV* Dump(SV * dummy, ...) {
         &event_stream_start,
         YAML_UTF8_ENCODING
     );
-    yaml_emitter_emit(&emitter, &event_stream_start);
+    yaml_emitter_emit(&dumper.emitter, &event_stream_start);
     for (i = 0; i < items; i++) {
-        dump_document(&emitter, ST(i));
+        dump_document(&dumper, ST(i));
     }
     yaml_stream_end_event_initialize(&event_stream_end);
-    yaml_emitter_emit(&emitter, &event_stream_end);
-    yaml_emitter_delete(&emitter);
+    yaml_emitter_emit(&dumper.emitter, &event_stream_end);
+    yaml_emitter_delete(&dumper.emitter);
     if (yaml) XPUSHs(yaml);
     PUTBACK;
 }
 
-void dump_document(yaml_emitter_t * emitter, SV* node) {
+void dump_document(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_event_t event_document_start;
     yaml_event_t event_document_end;
     yaml_document_start_event_initialize(
         &event_document_start, NULL, NULL, NULL, 0
     );
-    yaml_emitter_emit(emitter, &event_document_start);
-    dump_node(emitter, node);
+    yaml_emitter_emit(&dumper->emitter, &event_document_start);
+    dump_node(dumper, node);
     yaml_document_end_event_initialize(&event_document_end, 1);
-    yaml_emitter_emit(emitter, &event_document_end);
+    yaml_emitter_emit(&dumper->emitter, &event_document_end);
 }
 
-void dump_node(yaml_emitter_t * emitter, SV* node) {
+void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
     (SvROK(node)) 
-      ? (SvTYPE(SvRV(node)) == SVt_PVAV) ? dump_array(emitter, node) :
-        (SvTYPE(SvRV(node)) == SVt_PVHV) ? dump_hash(emitter, node) :
-        dump_scalar(emitter, SvRV(node))
-      : dump_scalar(emitter, node);
+      ? (SvTYPE(SvRV(node)) == SVt_PVAV) ? dump_array(dumper, node) :
+        (SvTYPE(SvRV(node)) == SVt_PVHV) ? dump_hash(dumper, node) :
+        dump_scalar(dumper, SvRV(node))
+      : dump_scalar(dumper, node);
 }
 
-void dump_hash(yaml_emitter_t * emitter, SV* node) {
+void dump_hash(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_event_t event_mapping_start;
     yaml_event_t event_mapping_end;
     int i;
@@ -183,7 +193,7 @@ void dump_hash(yaml_emitter_t * emitter, SV* node) {
     yaml_mapping_start_event_initialize(
         &event_mapping_start, NULL, NULL, 0, YAML_BLOCK_MAPPING_STYLE
     );
-    yaml_emitter_emit(emitter, &event_mapping_start);
+    yaml_emitter_emit(&dumper->emitter, &event_mapping_start);
 
     AV *av = (AV*)sv_2mortal((SV*)newAV());
     for (i = 0; i < len; i++) {
@@ -204,15 +214,15 @@ void dump_hash(yaml_emitter_t * emitter, SV* node) {
         HE *he  = hv_fetch_ent(hash, key, 0, 0);
         SV *val = HeVAL(he);
         if (val == NULL) { val = &PL_sv_undef; }
-        dump_node(emitter, key);
-        dump_node(emitter, val);
+        dump_node(dumper, key);
+        dump_node(dumper, val);
     }
 
     yaml_mapping_end_event_initialize(&event_mapping_end);
-    yaml_emitter_emit(emitter, &event_mapping_end);
+    yaml_emitter_emit(&dumper->emitter, &event_mapping_end);
 }
 
-void dump_array(yaml_emitter_t * emitter, SV* node) {
+void dump_array(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_event_t event_sequence_start;
     yaml_event_t event_sequence_end;
     int i;
@@ -221,30 +231,55 @@ void dump_array(yaml_emitter_t * emitter, SV* node) {
     yaml_sequence_start_event_initialize(
         &event_sequence_start, NULL, NULL, 0, YAML_BLOCK_SEQUENCE_STYLE
     );
-    yaml_emitter_emit(emitter, &event_sequence_start);
+    yaml_emitter_emit(&dumper->emitter, &event_sequence_start);
     for (i = 0; i < array_size; i++) {
         SV** entry = av_fetch(array, i, 0);
         if (entry == NULL)
-            dump_node(emitter, &PL_sv_undef);
+            dump_node(dumper, &PL_sv_undef);
         else
-            dump_node(emitter, *entry);
+            dump_node(dumper, *entry);
     }
     yaml_sequence_end_event_initialize(&event_sequence_end);
-    yaml_emitter_emit(emitter, &event_sequence_end);
+    yaml_emitter_emit(&dumper->emitter, &event_sequence_end);
 }
 
-void dump_scalar(yaml_emitter_t * emitter, SV* node) {
+void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_event_t event_scalar;
-    char * string = SvPV_nolen(node);
+    char * string;
+    int plain_implicit = 1;
+    int quoted_implicit = 0;
+    yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
+    svtype type = SvTYPE(node);
+
+    if (type == SVt_NULL) {
+        string = "~";
+        style = YAML_PLAIN_SCALAR_STYLE;
+    }
+    else {
+        string = SvPV_nolen(node);
+        if ((strcmp(string, "~") == 0) ||
+            (strcmp(string, "true") == 0) ||
+            (strcmp(string, "false") == 0) ||
+            (strcmp(string, "null") == 0)
+        ) {
+            plain_implicit = 0;
+            quoted_implicit = 1;
+            style = YAML_SINGLE_QUOTED_SCALAR_STYLE;
+        }
+    }
     int length = strlen(string);
     yaml_scalar_event_initialize(
         &event_scalar,
-        NULL, NULL,
-        (unsigned char *) string, length,
-        1, 0, YAML_PLAIN_SCALAR_STYLE
+        NULL,
+        NULL,
+        (unsigned char *) string,
+        length,
+        plain_implicit,
+        quoted_implicit,
+        style
     );
-    if (! yaml_emitter_emit(emitter, &event_scalar))
-        printf("emit scalar error: %s\n", emitter->problem);
+    if (! yaml_emitter_emit(&dumper->emitter, &event_scalar))
+        printf("emit scalar error: %s\n", dumper->emitter.problem);
 }
 
 int append_output(SV * yaml, unsigned char * buffer, unsigned int size) {

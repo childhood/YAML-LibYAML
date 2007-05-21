@@ -27,6 +27,7 @@ LibYAML/perl_libyaml.c
 LibYAML/ppport_sort.h
 LibYAML/reader.c
 LibYAML/scanner.c
+LibYAML/test.pl
 LibYAML/writer.c
 LibYAML/XS.xs
 LibYAML/yaml.h
@@ -35,9 +36,10 @@ Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
-t/data/1.t
+t/data/basic.t
 t/dump.t
 t/load-changes.t
 t/load.t
+t/null.t
 t/stackbug.t
 t/TestYAML.pm

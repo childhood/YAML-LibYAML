@@ -18,8 +18,9 @@ DESCRIPTION
     This module exports the functions "Dump" and "Load". These functions are
     intended to work exactly like "YAML.pm"'s corresponding functions.
 
-    NOTE: This very early proof-of-concept release only works for unblessed
-    hashes, arrays, and scalars, without reference aliases.
+    NOTE: This very early proof-of-concept release only works for
+    *unblessed* hashes, arrays, and scalars, without reference aliases. Also
+    works properly for undef values.
 
     On the other hand, this module supports the full YAML syntax for these
     data types. There are no known bugs yet.
