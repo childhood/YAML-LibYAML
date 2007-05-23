@@ -9,6 +9,11 @@ use base 'Exporter';
 
 our @EXPORT_OK = qw(Load Dump);
 
+sub Dump {
+    return '' unless @_;
+    return DumpXS(@_);
+}
+
 1;
 
 =head1 NAME

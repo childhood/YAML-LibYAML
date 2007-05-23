@@ -10,11 +10,15 @@
 # Tests:
 # * http://svn.ali.as/cpan/concept/cpan-yaml-tiny/
 #
+# Profiling:
+# * TonyC: sprof if I can remember the way to enable shared library profiling
+# * TonyC: LD_PROFILE, but that may not work on OS X
+# * TonyC: sample or Sampler.app on OS X, I'd guess
 package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);

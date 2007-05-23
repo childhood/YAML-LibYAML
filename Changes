@@ -1,4 +1,9 @@
 ---
+version: 0.06
+date:    Tue May 22 23:37:40 PDT 2007
+changes: Support dumping zero objects, and loading empty or comment only
+  streams to produce zero objects.
+---
 version: 0.05
 date:    Mon May 21 00:14:40 PDT 2007
 changes: TonyC pointed out the error in my ways for using newSVpvf for
