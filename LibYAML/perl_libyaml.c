@@ -127,7 +127,7 @@ SV* handle_scalar(perl_yaml_loader_t * loader) {
 
 /* -------------------------------------------------------------------------- */
 
-SV* DumpXS(SV * dummy, ...) {
+SV* Dump(SV * dummy, ...) {
     perl_yaml_dumper_t dumper;
     yaml_event_t event_stream_start;
     yaml_event_t event_stream_end;

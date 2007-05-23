@@ -17,11 +17,11 @@ Load (yaml_str)
         return;
 
 void
-DumpXS (dummy, ...)
-        SV * dummy
+Dump (...)
         PPCODE:
+        SV * dummy;
         PL_markstack_ptr++;
-        DumpXS(dummy);
+        Dump(dummy);
         return;
 
 
