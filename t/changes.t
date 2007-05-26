@@ -2,7 +2,7 @@ use t::TestYAML tests => 5;
 
 require YAML::LibYAML;
 
-my ($entries) = (7);
+my ($entries) = (8);
 
 open IN, "Changes" or die $!;
 my $yaml = do {local $/; <IN>};

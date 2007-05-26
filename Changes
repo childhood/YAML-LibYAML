@@ -1,4 +1,11 @@
 ---
+version: 0.08
+date:    Wed May 23 19:34:35 PDT 2007
+changes: 
+- Make sure dumped empty strings have quotes
+- Add boolean roundtrip support
+- Add full anchor/alias support
+---
 version: 0.07
 date:    Wed May 23 00:04:42 PDT 2007
 changes: TonyC showed me how to use '...' in my XS prototype to say zero or

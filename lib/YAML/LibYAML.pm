@@ -1,24 +1,29 @@
 # ToDo:
 #
-# * Find out how to loop over all the args passed to a C function
-# * Find out how to write C macros
-# * Support ~, null, true, false
-# * Rewrite documentation
-# * Support blessed objects
-# * Copy all relevant code from YAML::Syck
+# + Find out how to loop over all the args passed to a C function
+# + Find out how to write C macros
+# + Support ~, null, true, false
+# - Rewrite documentation
+# - Copy all relevant code from YAML::Syck
+#
+# Types:
+# - Support blessed objects
+# - Scalar refs
+# - Globs
+# - Regexps
 #
 # Tests:
-# * http://svn.ali.as/cpan/concept/cpan-yaml-tiny/
+# - http://svn.ali.as/cpan/concept/cpan-yaml-tiny/
 #
 # Profiling:
-# * TonyC: sprof if I can remember the way to enable shared library profiling
-# * TonyC: LD_PROFILE, but that may not work on OS X
-# * TonyC: sample or Sampler.app on OS X, I'd guess
+# - TonyC: sprof if I can remember the way to enable shared library profiling
+# - TonyC: LD_PROFILE, but that may not work on OS X
+# - TonyC: sample or Sampler.app on OS X, I'd guess
 package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
@@ -50,12 +55,28 @@ offer Perl the best YAML support to date.
 This module exports the functions C<Dump> and C<Load>. These functions
 are intended to work exactly like C<YAML.pm>'s corresponding functions.
 
-NOTE: This very early proof-of-concept release only works for
-I<unblessed> hashes, arrays, and scalars, without reference
-aliases. Also works properly for undef values.
+SUPPORTED:
+
+  * Unblessed hashes
+  * Unblessed arrays
+  * Unblessed scalars
+  * Duplicate hash/array refs
+  * Circular refs
+  * Empty Strings
+  * Undef values
+  * JSON true/false roundtripping
+
+UNSUPPORTED:
+  * Blessed stuff
+  * Scalar refs
+  * Typeglobs
+  * Regexps
+
+NOTE: This very early proof-of-concept does not yet support YAML type tags.
+And perl specific stuff like globs.
 
 On the other hand, this module supports the B<full> YAML syntax for
-these data types. There are no known bugs yet.
+everything else. There are no known bugs in libyaml yet.
 
 This work should progress quickly so check back often.
 

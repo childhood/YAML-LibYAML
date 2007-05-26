@@ -18,12 +18,24 @@ DESCRIPTION
     This module exports the functions "Dump" and "Load". These functions are
     intended to work exactly like "YAML.pm"'s corresponding functions.
 
-    NOTE: This very early proof-of-concept release only works for
-    *unblessed* hashes, arrays, and scalars, without reference aliases. Also
-    works properly for undef values.
+    SUPPORTED:
 
-    On the other hand, this module supports the full YAML syntax for these
-    data types. There are no known bugs yet.
+      * Unblessed hashes
+      * Unblessed arrays
+      * Unblessed scalars
+      * Duplicate hash/array refs
+      * Circular refs
+      * Empty Strings
+      * Undef values
+      * JSON true/false roundtripping
+
+    UNSUPPORTED: * Blessed stuff * Scalar refs * Typeglobs * Regexps
+
+    NOTE: This very early proof-of-concept does not yet support YAML type
+    tags. And perl specific stuff like globs.
+
+    On the other hand, this module supports the full YAML syntax for
+    everything else. There are no known bugs in libyaml yet.
 
     This work should progress quickly so check back often.
 

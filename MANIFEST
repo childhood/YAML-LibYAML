@@ -37,6 +37,8 @@ Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
+t/alias.t
+t/boolean.t
 t/bug-pvf.t
 t/bug-stack.t
 t/changes.t
@@ -45,4 +47,5 @@ t/dump.t
 t/empty.t
 t/load.t
 t/null.t
+t/quote.t
 t/TestYAML.pm
