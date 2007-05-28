@@ -11,18 +11,14 @@ use YAML::Tiny;
 use Benchmark;
 
 use Data::Dumper;
-BEGIN {
-    print Dumper( \%INC );
-}
 
 my $reps = 4;
 
-my %struct =
-  (
-   argh_hash   => { map { $_ => "Argh" } 0 .. $reps }
-   ,argh_list  => [ map { "Argh" } 0 .. $reps ]
-   ,argh_scalar => ("Argh" x 512) # Uncomment me to create pathological scalar case
-  );
+my %struct = (
+   argh_hash   => { map { $_ => "Argh" } 0 .. $reps },
+   argh_list  => [ map { "Argh" } 0 .. $reps ],
+   argh_scalar => ("Argh" x 512) # Uncomment to make pathological scalar case
+);
 
 my $current_struct = \%struct;
 

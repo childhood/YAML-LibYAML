@@ -1,4 +1,10 @@
 ---
+version: 0.09
+date:    Mon May 28 00:38:19 PDT 2007
+changes: 
+- Dump and Load scalar refs
+- Handle alias scalar refs
+---
 version: 0.08
 date:    Wed May 23 19:34:35 PDT 2007
 changes: 

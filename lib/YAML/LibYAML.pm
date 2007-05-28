@@ -23,7 +23,7 @@ package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
@@ -62,15 +62,19 @@ SUPPORTED:
   * Unblessed scalars
   * Duplicate hash/array refs
   * Circular refs
+  * Scalar refs
   * Empty Strings
   * Undef values
   * JSON true/false roundtripping
 
 UNSUPPORTED:
+
   * Blessed stuff
-  * Scalar refs
   * Typeglobs
   * Regexps
+  * Code refs
+  * Format refs
+  * File handles (IO refs)
 
 NOTE: This very early proof-of-concept does not yet support YAML type tags.
 And perl specific stuff like globs.

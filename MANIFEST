@@ -48,4 +48,6 @@ t/empty.t
 t/load.t
 t/null.t
 t/quote.t
+t/ref-scalar.t
 t/TestYAML.pm
+t/yaml_tests.yaml
