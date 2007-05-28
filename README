@@ -45,6 +45,8 @@ DESCRIPTION
     On the other hand, this module supports the full YAML syntax for
     everything else. There are no known bugs in libyaml yet.
 
+    YAML::LibYAML passes all tests defined by YAML::Tests.
+
     This work should progress quickly so check back often.
 
 AUTHOR

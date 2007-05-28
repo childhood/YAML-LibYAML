@@ -1,7 +1,4 @@
-use t::TestYAML tests => 5;
-
-use YAML::LibYAML;
-use Data::Dumper;
+use t::TestYAMLTests tests => 5;
 
 is Dump(), '',
     'Dumping no objects produces an empty yaml stream';

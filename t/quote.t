@@ -1,7 +1,4 @@
-use t::TestYAML tests => 3;
-
-use YAML::LibYAML;
-use Data::Dumper;
+use t::TestYAMLTests tests => 3;
 
 is Dump('', [''], {foo => ''}), <<'...', 'Dumped empty string is quoted';
 --- ''

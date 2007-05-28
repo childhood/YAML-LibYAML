@@ -1,7 +1,4 @@
-use t::TestYAML tests => 2;
-
-use YAML::LibYAML;
-use Data::Dumper;
+use t::TestYAMLTests tests => 2;
 
 my $array = [
     undef,

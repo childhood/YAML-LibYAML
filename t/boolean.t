@@ -1,6 +1,4 @@
-use t::TestYAML tests => 5;
-
-use YAML::LibYAML;
+use t::TestYAMLTests tests => 5;
 
 my $yaml = <<'...';
 ---
@@ -10,7 +8,7 @@ c: false
 d: ''
 ...
 
-my $hash = Load($yaml);
+my $hash = Load $yaml;
 
 cmp_ok $hash->{a}, '==', $hash->{b},
     "true is loaded as a scalar whose numeric value is 1";

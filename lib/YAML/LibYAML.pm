@@ -23,7 +23,7 @@ package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
@@ -81,6 +81,8 @@ And perl specific stuff like globs.
 
 On the other hand, this module supports the B<full> YAML syntax for
 everything else. There are no known bugs in libyaml yet.
+
+YAML::LibYAML passes all tests defined by YAML::Tests.
 
 This work should progress quickly so check back often.
 

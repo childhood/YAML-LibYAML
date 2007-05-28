@@ -50,4 +50,5 @@ t/null.t
 t/quote.t
 t/ref-scalar.t
 t/TestYAML.pm
+t/TestYAMLTests.pm
 t/yaml_tests.yaml

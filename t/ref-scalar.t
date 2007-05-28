@@ -1,7 +1,4 @@
-use t::TestYAML tests => 8;
-
-use YAML::LibYAML;
-# use XXX -dumper;
+use t::TestYAMLTests tests => 8;
 
 run {
     my $block = shift;

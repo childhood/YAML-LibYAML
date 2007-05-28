@@ -1,4 +1,4 @@
-use t::TestYAML tests => 5;
+use t::TestYAMLTests tests => 5;
 
 spec_file('t/data/basic.t');
 filters {
@@ -9,6 +9,5 @@ filters {
 run_is_deeply yaml => 'perl';
 
 sub parse_to_byte {
-    require YAML::LibYAML;
-    YAML::LibYAML::Load($_);
+    Load($_);
 }

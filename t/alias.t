@@ -1,8 +1,4 @@
-use t::TestYAML tests => 5;
-
-use YAML::LibYAML;
-
-# sv_magic ?
+use t::TestYAMLTests tests => 5;
 
 my ($a, $b) = Load(<<'...');
 ---
