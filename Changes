@@ -1,4 +1,8 @@
 ---
+version: 0.14
+date:    Wed May 30 02:31:39 PDT 2007
+changes: Plain empty strings should load as undef
+---
 version: 0.12
 date:    Wed May 30 01:08:52 PDT 2007
 changes: Add support for dumping code refs and blessed code refs

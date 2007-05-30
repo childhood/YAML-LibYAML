@@ -166,6 +166,9 @@ SV* load_scalar(perl_yaml_loader_t * loader) {
         if (strEQ(string, "~")) {
             return &PL_sv_undef;
         }
+        else if (strEQ(string, "")) {
+            return &PL_sv_undef;
+        }
         else if (strEQ(string, "true")) {
             return &PL_sv_yes;
         }
