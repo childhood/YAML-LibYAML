@@ -38,6 +38,7 @@ MANIFEST			This list of files
 META.yml
 README
 t/alias.t
+t/blessed.t
 t/boolean.t
 t/bug-pvf.t
 t/bug-stack.t

@@ -5,7 +5,9 @@
 #include <yaml.h>
 #include <ppport_sort.h>
 
-#define TAG_PERL_REF "tag:yaml.org,2002:perl/ref"
+#define TAG_PERL_PREFIX "tag:yaml.org,2002:perl/"
+#define TAG_PERL_REF TAG_PERL_PREFIX "ref"
+#define TAG_URI_MAX_SIZE 512
 
 typedef struct {
     yaml_parser_t parser;
@@ -89,7 +91,7 @@ SV* load_node(perl_yaml_loader_t * loader) {
         loader->event.type == YAML_MAPPING_END_EVENT ||
         loader->event.type == YAML_SEQUENCE_END_EVENT) return NULL;
     if (loader->event.type == YAML_MAPPING_START_EVENT) {
-        if (tag && strcmp(tag, TAG_PERL_REF) == 0)
+        if (tag && strEQ(tag, TAG_PERL_REF))
             return load_scalar_ref(loader);
         return load_mapping(loader);
     }
@@ -114,6 +116,7 @@ SV* load_mapping(perl_yaml_loader_t * loader) {
     HV* hash = newHV();
     SV* hash_ref = (SV*) newRV_noinc((SV*) hash);
     char * anchor = (char *)loader->event.data.mapping_start.anchor;
+    char * tag = (char *)loader->event.data.mapping_start.tag;
     if (anchor)
         hv_store(loader->anchors, anchor, strlen(anchor), hash_ref, 0);
     while (key_node = load_node(loader)) {
@@ -123,6 +126,14 @@ SV* load_mapping(perl_yaml_loader_t * loader) {
             hash, SvPV_nolen(key_node), sv_len(key_node), value_node, 0
         );
     } 
+    if (tag) {
+        char* prefix = "tag:yaml.org,2002:perl/hash:";
+        if (strlen(tag) <= strlen(prefix) ||
+            ! strnEQ(tag, prefix, strlen(prefix))
+        ) _die("Bad tag found for hash");
+        char* class = tag + strlen(prefix);
+        sv_bless(hash_ref, gv_stashpv(class, TRUE)); 
+    }
     return hash_ref;
 }
 
@@ -131,24 +142,33 @@ SV* load_sequence(perl_yaml_loader_t * loader) {
     AV* array = newAV();
     SV* array_ref = (SV*) newRV_noinc((SV*) array);
     char * key = (char *)loader->event.data.sequence_start.anchor;
+    char * tag = (char *)loader->event.data.mapping_start.tag;
     if (key)
         hv_store(loader->anchors, key, strlen(key), array_ref, 0);
     while (node = load_node(loader)) {
         av_push(array, node);
     } 
+    if (tag) {
+        char* prefix = "tag:yaml.org,2002:perl/array:";
+        if (strlen(tag) <= strlen(prefix) ||
+            ! strnEQ(tag, prefix, strlen(prefix))
+        ) _die("Bad tag found for array");
+        char* class = tag + strlen(prefix);
+        sv_bless(array_ref, gv_stashpv(class, TRUE)); 
+    }
     return array_ref;
 }
 
 SV* load_scalar(perl_yaml_loader_t * loader) {
     char * string = (char *) loader->event.data.scalar.value;
     if (loader->event.data.scalar.style == YAML_PLAIN_SCALAR_STYLE) {
-        if (strcmp(string, "~") == 0) {
+        if (strEQ(string, "~")) {
             return &PL_sv_undef;
         }
-        else if (strcmp(string, "true") == 0) {
+        else if (strEQ(string, "true")) {
             return &PL_sv_yes;
         }
-        else if (strcmp(string, "false") == 0) {
+        else if (strEQ(string, "false")) {
             return &PL_sv_no;
         }
     }
@@ -320,6 +340,43 @@ void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
     }
 }
 
+yaml_char_t* get_yaml_tag(SV* node) {
+    if (! sv_isobject(node))
+        return NULL;
+    svtype type = SvTYPE(node);
+    char* ref = NULL;
+    char* tag;
+    New(801, tag, TAG_URI_MAX_SIZE, char);
+
+    ref = savepv(sv_reftype(SvRV(node), TRUE));
+    *tag = '\0';
+    strcat(tag, TAG_PERL_PREFIX);
+
+    switch (SvTYPE(SvRV(node))) {
+        case SVt_PVAV: { strcat(tag, "array:");  break; }
+        case SVt_PVHV: { strcat(tag, "hash:");   break; }
+        case SVt_PVCV: { strcat(tag, "code:");   break; }
+        case SVt_PVGV: { strcat(tag, "glob:");   break; }
+
+/* flatten scalar ref objects so that they dump as !perl/scalar:Foo::Bar foo */
+        case SVt_PVMG: {
+            if ( !SvROK(SvRV(node)) ) {
+                strcat(tag, "scalar:");
+                node = SvRV(node);
+                type = SvTYPE(node);
+                break;
+            } else {
+                strcat(tag, "ref:");
+                break;
+            }
+        }
+    }
+    if ((strlen(tag) + strlen(ref)) >= (TAG_URI_MAX_SIZE - 1))
+        _die("Tag is too long for YAML::LibYAML::Dump");
+    strcat(tag, ref);
+    return (yaml_char_t*)tag;
+} 
+
 void dump_hash(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_event_t event_mapping_start;
     yaml_event_t event_mapping_end;
@@ -342,12 +399,17 @@ void dump_hash(perl_yaml_dumper_t * dumper, SV* node) {
         }
         SvREADONLY_on(*seen);
     }
-
+    
+    yaml_char_t* tag = get_yaml_tag(node);
+    
     yaml_mapping_start_event_initialize(
-        &event_mapping_start, anchor, NULL, 0, YAML_BLOCK_MAPPING_STYLE
+        &event_mapping_start, anchor, tag, 0, YAML_BLOCK_MAPPING_STYLE
     );
     // printf("yaml_emitter_emit event_mapping_start\n");
     yaml_emitter_emit(&dumper->emitter, &event_mapping_start);
+
+    if (tag)
+        Safefree(tag);
 
     AV *av = (AV*)sv_2mortal((SV*)newAV());
     for (i = 0; i < len; i++) {
@@ -391,9 +453,15 @@ void dump_array(perl_yaml_dumper_t * dumper, SV * node) {
         SvREADONLY_on(*seen);
     }
 
+    yaml_char_t* tag = get_yaml_tag(node);
+    
     yaml_sequence_start_event_initialize(
-        &event_sequence_start, anchor, NULL, 0, YAML_BLOCK_SEQUENCE_STYLE
+        &event_sequence_start, anchor, tag, 0, YAML_BLOCK_SEQUENCE_STYLE
     );
+
+    if (tag)
+        Safefree(tag);
+
     // printf("yaml_emitter_emit event_sequence_start\n");
     yaml_emitter_emit(&dumper->emitter, &event_sequence_start);
     for (i = 0; i < array_size; i++) {
@@ -433,10 +501,10 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
         string = SvPV_nolen(node);
         if (
             (strlen(string) == 0) ||
-            (strcmp(string, "~") == 0) ||
-            (strcmp(string, "true") == 0) ||
-            (strcmp(string, "false") == 0) ||
-            (strcmp(string, "null") == 0)
+            strEQ(string, "~") ||
+            strEQ(string, "true") ||
+            strEQ(string, "false") ||
+            strEQ(string, "null")
         ) {
             plain_implicit = 0;
             quoted_implicit = 1;

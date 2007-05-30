@@ -1,4 +1,10 @@
 ---
+version: 0.11
+date:    Tue May 29 17:25:18 PDT 2007
+changes:
+- Fixed false YAML::Tiny dependency
+- Support blessed hashes and arrays
+---
 version: 0.10
 date:    Mon May 28 03:17:29 PDT 2007
 changes: Integrated with YAML::Tests test suite.
