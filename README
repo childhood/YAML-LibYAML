@@ -29,21 +29,17 @@ DESCRIPTION
       * Empty Strings
       * Undef values
       * JSON true/false roundtripping
+      * Blessed stuff
+      * Code refs
 
     UNSUPPORTED:
 
-      * Blessed stuff
       * Typeglobs
       * Regexps
-      * Code refs
       * Format refs
       * File handles (IO refs)
 
-    NOTE: This very early proof-of-concept does not yet support YAML type
-    tags. And perl specific stuff like globs.
-
-    On the other hand, this module supports the full YAML syntax for
-    everything else. There are no known bugs in libyaml yet.
+    There are no known bugs in libyaml yet.
 
     YAML::LibYAML passes all tests defined by YAML::Tests.
 

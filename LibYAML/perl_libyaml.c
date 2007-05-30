@@ -35,6 +35,7 @@ void dump_hash(perl_yaml_dumper_t*, SV*);
 void dump_array(perl_yaml_dumper_t*, SV*);
 void dump_scalar(perl_yaml_dumper_t*, SV*);
 void dump_ref(perl_yaml_dumper_t*, SV*);
+void dump_code(perl_yaml_dumper_t*, SV*);
 
 int append_output(SV *, unsigned char *, unsigned int size);
 
@@ -327,6 +328,9 @@ void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
         else if (ref_type <= SVt_PVNV) {
             dump_ref(dumper, node);
         }
+        else if (ref_type == SVt_PVCV) {
+            dump_code(dumper, node);
+        }
         else {
             printf(
                 "YAML::LibYAML dump unhandled ref. type == '%d'!\n",
@@ -341,8 +345,13 @@ void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
 }
 
 yaml_char_t* get_yaml_tag(SV* node) {
-    if (! sv_isobject(node))
-        return NULL;
+    if (SvMAGICAL(node)) mg_get(node);
+    if (! (
+        sv_isobject(node) || 
+        SvRV(node) && (
+            SvTYPE(SvRV(node)) == SVt_PVCV
+        )
+    )) return NULL;
     svtype type = SvTYPE(node);
     char* ref = NULL;
     char* tag;
@@ -373,7 +382,8 @@ yaml_char_t* get_yaml_tag(SV* node) {
     }
     if ((strlen(tag) + strlen(ref)) >= (TAG_URI_MAX_SIZE - 1))
         _die("Tag is too long for YAML::LibYAML::Dump");
-    strcat(tag, ref);
+    if (! (SvTYPE(SvRV(node)) == SVt_PVCV && strEQ(ref, "CODE")))
+        strcat(tag, ref);
     return (yaml_char_t*)tag;
 } 
 
@@ -408,8 +418,7 @@ void dump_hash(perl_yaml_dumper_t * dumper, SV* node) {
     // printf("yaml_emitter_emit event_mapping_start\n");
     yaml_emitter_emit(&dumper->emitter, &event_mapping_start);
 
-    if (tag)
-        Safefree(tag);
+    if (tag) Safefree(tag);
 
     AV *av = (AV*)sv_2mortal((SV*)newAV());
     for (i = 0; i < len; i++) {
@@ -459,8 +468,7 @@ void dump_array(perl_yaml_dumper_t * dumper, SV * node) {
         &event_sequence_start, anchor, tag, 0, YAML_BLOCK_SEQUENCE_STYLE
     );
 
-    if (tag)
-        Safefree(tag);
+    if (tag) Safefree(tag);
 
     // printf("yaml_emitter_emit event_sequence_start\n");
     yaml_emitter_emit(&dumper->emitter, &event_sequence_start);
@@ -527,6 +535,29 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
         printf(
             "emit scalar '%s', error: %s\n", string, dumper->emitter.problem
         );
+}
+
+void dump_code(perl_yaml_dumper_t * dumper, SV* node) {
+    yaml_event_t event_scalar;
+    char * string = "{ \"DUMMY\" }";
+    int length = strlen(string);
+    svtype type = SvTYPE(node);
+    yaml_char_t* tag = get_yaml_tag(node);
+    
+    yaml_scalar_event_initialize(
+        &event_scalar,
+        NULL,
+        tag,
+        (unsigned char *) string,
+        strlen(string),
+        0,
+        0,
+        YAML_SINGLE_QUOTED_SCALAR_STYLE
+    );
+
+    if (tag) Safefree(tag);
+
+    yaml_emitter_emit(&dumper->emitter, &event_scalar);
 }
 
 void dump_ref(perl_yaml_dumper_t * dumper, SV* node) {

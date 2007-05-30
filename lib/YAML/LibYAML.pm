@@ -23,7 +23,7 @@ package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
@@ -66,21 +66,17 @@ SUPPORTED:
   * Empty Strings
   * Undef values
   * JSON true/false roundtripping
+  * Blessed stuff
+  * Code refs
 
 UNSUPPORTED:
 
-  * Blessed stuff
   * Typeglobs
   * Regexps
-  * Code refs
   * Format refs
   * File handles (IO refs)
 
-NOTE: This very early proof-of-concept does not yet support YAML type tags.
-And perl specific stuff like globs.
-
-On the other hand, this module supports the B<full> YAML syntax for
-everything else. There are no known bugs in libyaml yet.
+There are no known bugs in libyaml yet.
 
 YAML::LibYAML passes all tests defined by YAML::Tests.
 

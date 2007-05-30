@@ -1,5 +1,4 @@
 Changes
-dev-bin/bench.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
@@ -43,6 +42,7 @@ t/boolean.t
 t/bug-pvf.t
 t/bug-stack.t
 t/changes.t
+t/code.t
 t/data/basic.t
 t/dump.t
 t/empty.t
