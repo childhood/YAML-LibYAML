@@ -46,6 +46,7 @@ t/code.t
 t/data/basic.t
 t/dump.t
 t/empty.t
+t/glob.t
 t/load.t
 t/null.t
 t/quote.t

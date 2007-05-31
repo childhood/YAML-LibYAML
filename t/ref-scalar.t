@@ -1,4 +1,4 @@
-use t::TestYAMLTests tests => 8;
+use t::TestYAMLTests tests => 10;
 
 run {
     my $block = shift;
@@ -70,3 +70,10 @@ my $x = {foo => \undef};
 foo: !!perl/ref
   =: ~
 
+=== Circular ref to scalar
++++ perl
+my $x;
+$x = \$x;
++++ yaml
+--- &1 !!perl/ref
+=: *1

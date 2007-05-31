@@ -1,6 +1,6 @@
 package t::TestYAMLTests;
 use Test::Base -Base;
-@t::TestYAMLTests::EXPORT = qw(Load Dump);
+@t::TestYAMLTests::EXPORT = qw(Load Dump n2y y2n nyny);
 
 sub load_config() {
     my $config_file = shift;
@@ -27,6 +27,63 @@ BEGIN {
     $yaml_module = $ENV{PERL_YAML_TESTS_MODULE} || $config->{yaml_module}
       or die "Can't determine which YAML module to use for this test.";
     eval "require $yaml_module; 1" or die $@;
+    $Y::T = $yaml_module;
+}
+
+sub get_block_by_name() {
+    (my ($self), @_) = find_my_self(@_);
+    $self->{blocks_by_name} ||= do {
+        my $hash = {};
+        for my $block ($self->blocks) {
+            $hash->{$block->name} = $block;
+        }
+        $hash;
+    };
+    my $name = shift;
+    return $self->{blocks_by_name}{$name};
+}
+
+sub nyny() {
+    (my ($self), @_) = find_my_self(@_);
+
+    my $test = $self->get_block_by_name(@_);
+    my $perl = eval $test->perl;
+    my $result = Dump(Load(Dump($perl)));
+    for my $section (qw'yaml3 yaml yaml2') {
+        my $yaml = $test->$section or next;
+        if ($result eq $yaml) {
+            is $result, $yaml, "NYNY: " . $test->name;
+            return;
+        }
+    }
+    my $yaml = $test->yaml;
+    is $result, $yaml, "NYNY: " . $test->name;
+}
+
+sub n2y() {
+    (my ($self), @_) = find_my_self(@_);
+
+    my $test = $self->get_block_by_name(@_);
+    my $perl = eval $test->perl;
+    my $result = Dump($perl);
+    for my $section (qw'yaml3 yaml yaml2') {
+        my $yaml = $test->$section or next;
+        if ($result eq $yaml) {
+            is $result, $yaml, "Dump: " . $test->name;
+            return;
+        }
+    }
+    my $yaml = $test->yaml;
+    is $result, $yaml, "Dump: " . $test->name;
+}
+
+sub y2n() {
+    (my ($self), @_) = find_my_self(@_);
+
+    my $test = $self->get_block_by_name(@_);
+    my $perl = eval $test->perl;
+    my $yaml = $test->yaml;
+    is_deeply Load($yaml), $perl, "Load: " . $test->name;
 }
 
 sub Load() {

@@ -7,7 +7,6 @@
 
 #define TAG_PERL_PREFIX "tag:yaml.org,2002:perl/"
 #define TAG_PERL_REF TAG_PERL_PREFIX "ref"
-#define TAG_URI_MAX_SIZE 512
 
 typedef struct {
     yaml_parser_t parser;
@@ -128,7 +127,7 @@ SV* load_mapping(perl_yaml_loader_t * loader) {
         );
     } 
     if (tag) {
-        char* prefix = "tag:yaml.org,2002:perl/hash:";
+        char* prefix = TAG_PERL_PREFIX "hash:";
         if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
         ) _die("Bad tag found for hash");
@@ -150,7 +149,7 @@ SV* load_sequence(perl_yaml_loader_t * loader) {
         av_push(array, node);
     } 
     if (tag) {
-        char* prefix = "tag:yaml.org,2002:perl/array:";
+        char* prefix = TAG_PERL_PREFIX "array:";
         if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
         ) _die("Bad tag found for array");
@@ -182,19 +181,22 @@ SV* load_scalar(perl_yaml_loader_t * loader) {
 SV* load_alias(perl_yaml_loader_t * loader) {
     char * anchor = (char *) loader->event.data.alias.anchor;
     SV** entry = hv_fetch(loader->anchors, anchor, strlen(anchor), 0);
-    return entry ? *entry : newSVpvf("*%s", anchor);
+    if (entry) return *entry;
+    char* msg;
+    asprintf(&msg, "No anchor for alias '%s'", anchor);
+    _die(msg);
 }
 
 SV* load_scalar_ref(perl_yaml_loader_t * loader) {
     SV* value_node;
     char * anchor = (char *)loader->event.data.mapping_start.anchor;
+    SV* rv = newRV_noinc(&PL_sv_undef);
+    if (anchor) {
+        hv_store(loader->anchors, anchor, strlen(anchor), rv, 0);
+    }
     load_node(loader);  // Load the single hash key (=)
     value_node = load_node(loader);
-    if (value_node == &PL_sv_undef)
-        value_node = newSVpvn(NULL, 0);
-    SV* rv = newRV_inc(value_node);
-    if (anchor)
-        hv_store(loader->anchors, anchor, strlen(anchor), rv, 0);
+    SvRV(rv) = value_node;
     load_node(loader) == NULL || _die("Expected end of node");
     return rv;
 }
@@ -237,7 +239,6 @@ SV* Dump(SV * dummy, ...) {
     PUTBACK;
 }
 
-// 00:12 <TonyC> hv_store(hv, (char *)&node, sizeof(node), some_sv, 0);
 void dump_prewalk(perl_yaml_dumper_t * dumper, SV* node) {
     int i, len;
 
@@ -348,46 +349,41 @@ void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
 }
 
 yaml_char_t* get_yaml_tag(SV* node) {
-    if (SvMAGICAL(node)) mg_get(node);
     if (! (
         sv_isobject(node) || 
         SvRV(node) && (
             SvTYPE(SvRV(node)) == SVt_PVCV
         )
     )) return NULL;
-    svtype type = SvTYPE(node);
-    char* ref = NULL;
-    char* tag;
-    New(801, tag, TAG_URI_MAX_SIZE, char);
-
-    ref = savepv(sv_reftype(SvRV(node), TRUE));
-    *tag = '\0';
-    strcat(tag, TAG_PERL_PREFIX);
+    char* ref = sv_reftype(SvRV(node), TRUE);
+    char* type = "";
 
     switch (SvTYPE(SvRV(node))) {
-        case SVt_PVAV: { strcat(tag, "array:");  break; }
-        case SVt_PVHV: { strcat(tag, "hash:");   break; }
-        case SVt_PVCV: { strcat(tag, "code:");   break; }
-        case SVt_PVGV: { strcat(tag, "glob:");   break; }
+        case SVt_PVAV: { type = "array"; break; }
+        case SVt_PVHV: { type = "hash"; break; }
+        case SVt_PVCV: { type = "code"; break; }
+        case SVt_PVGV: { type = "glob"; break; }
 
 /* flatten scalar ref objects so that they dump as !perl/scalar:Foo::Bar foo */
         case SVt_PVMG: {
             if ( !SvROK(SvRV(node)) ) {
-                strcat(tag, "scalar:");
+                type = "scalar";
                 node = SvRV(node);
-                type = SvTYPE(node);
                 break;
             } else {
-                strcat(tag, "ref:");
+                type = "ref";
                 break;
             }
         }
     }
-    if ((strlen(tag) + strlen(ref)) >= (TAG_URI_MAX_SIZE - 1))
-        _die("Tag is too long for YAML::LibYAML::Dump");
-    if (! (SvTYPE(SvRV(node)) == SVt_PVCV && strEQ(ref, "CODE")))
-        strcat(tag, ref);
-    return (yaml_char_t*)tag;
+    yaml_char_t* tag;
+    if ((strlen(type) == 0))
+        tag = (yaml_char_t*) form("%s%s", TAG_PERL_PREFIX, ref);
+    else if (SvTYPE(SvRV(node)) == SVt_PVCV && strEQ(ref, "CODE"))
+        tag = (yaml_char_t*) form("%s%s", TAG_PERL_PREFIX, type);
+    else
+        tag = (yaml_char_t*) form("%s%s:%s", TAG_PERL_PREFIX, type, ref);
+    return tag;
 } 
 
 void dump_hash(perl_yaml_dumper_t * dumper, SV* node) {
@@ -420,8 +416,6 @@ void dump_hash(perl_yaml_dumper_t * dumper, SV* node) {
     );
     // printf("yaml_emitter_emit event_mapping_start\n");
     yaml_emitter_emit(&dumper->emitter, &event_mapping_start);
-
-    if (tag) Safefree(tag);
 
     AV *av = (AV*)sv_2mortal((SV*)newAV());
     for (i = 0; i < len; i++) {
@@ -471,8 +465,6 @@ void dump_array(perl_yaml_dumper_t * dumper, SV * node) {
         &event_sequence_start, anchor, tag, 0, YAML_BLOCK_SEQUENCE_STYLE
     );
 
-    if (tag) Safefree(tag);
-
     // printf("yaml_emitter_emit event_sequence_start\n");
     yaml_emitter_emit(&dumper->emitter, &event_sequence_start);
     for (i = 0; i < array_size; i++) {
@@ -495,7 +487,6 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
     svtype type = SvTYPE(node);
 
-
     if (type == SVt_NULL) {
         string = "~";
         style = YAML_PLAIN_SCALAR_STYLE;
@@ -515,7 +506,8 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
             strEQ(string, "~") ||
             strEQ(string, "true") ||
             strEQ(string, "false") ||
-            strEQ(string, "null")
+            strEQ(string, "null") ||
+            (type >= SVt_PVGV)
         ) {
             plain_implicit = 0;
             quoted_implicit = 1;
@@ -558,8 +550,6 @@ void dump_code(perl_yaml_dumper_t * dumper, SV* node) {
         YAML_SINGLE_QUOTED_SCALAR_STYLE
     );
 
-    if (tag) Safefree(tag);
-
     yaml_emitter_emit(&dumper->emitter, &event_scalar);
 }
 
@@ -587,7 +577,7 @@ void dump_ref(perl_yaml_dumper_t * dumper, SV* node) {
 
     yaml_mapping_start_event_initialize(
         &event_mapping_start, anchor,
-        (unsigned char *) "tag:yaml.org,2002:perl/ref",
+        (unsigned char *) TAG_PERL_PREFIX "ref",
         0, YAML_BLOCK_MAPPING_STYLE
     );
     yaml_emitter_emit(&dumper->emitter, &event_mapping_start);

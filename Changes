@@ -1,4 +1,10 @@
 ---
+version: 0.15
+date:    Wed May 30 20:16:22 PDT 2007
+changes:
+- Use 'Perl_form' to generate tags. Don't use memory allocating.
+- Can correctly load a scalar ref to itself.
+---
 version: 0.14
 date:    Wed May 30 02:31:39 PDT 2007
 changes: Plain empty strings should load as undef

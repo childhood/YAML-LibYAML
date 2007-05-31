@@ -3,7 +3,7 @@ use t::TestYAMLTests tests => 2;
 my $sub = sub { print "Hi.\n" };
 
 my $yaml = <<'...';
---- !!perl/code: '{ "DUMMY" }'
+--- !!perl/code '{ "DUMMY" }'
 ...
 
 is Dump($sub), $yaml,

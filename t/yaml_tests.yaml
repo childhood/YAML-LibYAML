@@ -1,2 +1,4 @@
 yaml_module: YAML::LibYAML
 use_blib: 1
+exclude:
+- scalars.t

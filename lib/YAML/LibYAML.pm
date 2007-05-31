@@ -7,8 +7,8 @@
 # - Copy all relevant code from YAML::Syck
 #
 # Types:
-# - Support blessed objects
-# - Scalar refs
+# + Support blessed objects
+# + Scalar refs
 # - Globs
 # - Regexps
 #
@@ -23,7 +23,7 @@ package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
@@ -71,16 +71,30 @@ SUPPORTED:
 
 UNSUPPORTED:
 
-  * Typeglobs
+  * Typeglobs 
   * Regexps
-  * Format refs
   * File handles (IO refs)
 
-There are no known bugs in libyaml yet.
-
-YAML::LibYAML passes all tests defined by YAML::Tests.
+YAML::LibYAML currently serializes these things as good as most
+serializers, but YAML.pm goes farther and dumps these specially.
+YAML::LibYAML does not yet dump these fully.
 
 This work should progress quickly so check back often.
+
+=head1 BUGS
+
+There are no known bugs in the libyaml C library yet. The code is nearly
+2 years old.
+
+The YAML::LibYAML::XS binding is new. Bugs are likely. Please
+report all bugs.
+
+=head1 SEE ALSO
+
+ * YAML.pm
+ * YAML::Syck
+ * YAML::Tiny
+ * YAML::Tests
 
 =head1 AUTHOR
 
