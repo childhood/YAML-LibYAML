@@ -13,7 +13,7 @@ WriteMakefile(
     PREREQ_PM => {},
     DEFINE => '-DHAVE_CONFIG_H',
     LIBS => [''], # e.g., '-lm'
-    INC => '-I. -Iinclude',
+    INC => '-I.',
     OBJECT => $obj_files,
     ABSTRACT_FROM => 'lib/YAML/LibYAML/XS.pm',
     AUTHOR => 'Ingy döt Net <ingy@cpan.org>',

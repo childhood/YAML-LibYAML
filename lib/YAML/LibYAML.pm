@@ -23,7 +23,7 @@ package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);

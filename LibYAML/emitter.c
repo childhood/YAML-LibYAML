@@ -1160,6 +1160,13 @@ static int
 yaml_emitter_select_scalar_style(yaml_emitter_t *emitter, yaml_event_t *event)
 {
     yaml_scalar_style_t style = event->data.scalar.style;
+    int no_tag = (!emitter->tag_data.handle && !emitter->tag_data.suffix);
+
+    if (no_tag && !event->data.scalar.plain_implicit
+            && !event->data.scalar.quoted_implicit) {
+        return yaml_emitter_set_emitter_error(emitter,
+                "neither tag nor implicit flags are specified");
+    }
 
     if (style == YAML_ANY_SCALAR_STYLE)
         style = YAML_PLAIN_SCALAR_STYLE;
@@ -1178,8 +1185,7 @@ yaml_emitter_select_scalar_style(yaml_emitter_t *emitter, yaml_event_t *event)
         if (!emitter->scalar_data.length
                 && (emitter->flow_level || emitter->simple_key_context))
             style = YAML_SINGLE_QUOTED_SCALAR_STYLE;
-        if (!event->data.scalar.plain_implicit
-                && !emitter->tag_data.handle && !emitter->tag_data.suffix)
+        if (no_tag && !event->data.scalar.plain_implicit)
             style = YAML_SINGLE_QUOTED_SCALAR_STYLE;
     }
 
@@ -1196,19 +1202,11 @@ yaml_emitter_select_scalar_style(yaml_emitter_t *emitter, yaml_event_t *event)
             style = YAML_DOUBLE_QUOTED_SCALAR_STYLE;
     }
 
-    if (!emitter->tag_data.handle && !emitter->tag_data.suffix)
+    if (no_tag && !event->data.scalar.quoted_implicit
+            && style != YAML_PLAIN_SCALAR_STYLE)
     {
-        if (!event->data.scalar.plain_implicit
-                && !event->data.scalar.quoted_implicit) {
-            return yaml_emitter_set_emitter_error(emitter,
-                    "neither tag nor implicit flags are specified");
-        }
-
-        if (event->data.scalar.plain_implicit
-                && style != YAML_PLAIN_SCALAR_STYLE) {
-            emitter->tag_data.handle = (yaml_char_t *)"!";
-            emitter->tag_data.handle_length = 1;
-        }
+        emitter->tag_data.handle = (yaml_char_t *)"!";
+        emitter->tag_data.handle_length = 1;
     }
 
     emitter->scalar_data.style = style;
@@ -1421,7 +1419,7 @@ yaml_emitter_analyze_tag(yaml_emitter_t *emitter,
     for (tag_directive = emitter->tag_directives.start;
             tag_directive != emitter->tag_directives.top; tag_directive ++) {
         size_t prefix_length = strlen((char *)tag_directive->prefix);
-        if (prefix_length < (string.end - string.start)
+        if (prefix_length < (size_t)(string.end - string.start)
                 && strncmp((char *)tag_directive->prefix, (char *)string.start,
                     prefix_length) == 0)
         {
@@ -2039,7 +2037,7 @@ yaml_emitter_write_double_quoted_scalar(yaml_emitter_t *emitter,
                     (octet & 0xE0) == 0xC0 ? octet & 0x1F :
                     (octet & 0xF0) == 0xE0 ? octet & 0x0F :
                     (octet & 0xF8) == 0xF0 ? octet & 0x07 : 0;
-            for (k = 1; k < width; k ++) {
+            for (k = 1; k < (int)width; k ++) {
                 octet = string.pointer[k];
                 value = (value << 6) + (octet & 0x3F);
             }

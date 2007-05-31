@@ -7,6 +7,7 @@
 
 #define TAG_PERL_PREFIX "tag:yaml.org,2002:perl/"
 #define TAG_PERL_REF TAG_PERL_PREFIX "ref"
+#define TAG_PERL_STR TAG_PERL_PREFIX "str"
 
 typedef struct {
     yaml_parser_t parser;
@@ -45,8 +46,6 @@ void* _die(char* msg) {
 void Load(char* yaml_str) {
     dXSARGS; sp = mark;
     perl_yaml_loader_t loader;
-    /*yaml_parser_t parser;
-    yaml_event_t event;*/
     SV* node;
     yaml_parser_initialize(&loader.parser);
     yaml_parser_set_input_string(
@@ -482,8 +481,7 @@ void dump_array(perl_yaml_dumper_t * dumper, SV * node) {
 void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_event_t event_scalar;
     char * string;
-    int plain_implicit = 1;
-    int quoted_implicit = 0;
+    yaml_char_t* tag = (yaml_char_t*) TAG_PERL_STR;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
     svtype type = SvTYPE(node);
 
@@ -509,8 +507,6 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
             strEQ(string, "null") ||
             (type >= SVt_PVGV)
         ) {
-            plain_implicit = 0;
-            quoted_implicit = 1;
             style = YAML_SINGLE_QUOTED_SCALAR_STYLE;
         }
     }
@@ -518,11 +514,11 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_scalar_event_initialize(
         &event_scalar,
         NULL,
-        NULL,
+        tag,
         (unsigned char *) string,
         length,
-        plain_implicit,
-        quoted_implicit,
+        1,
+        1,
         style
     );
     // printf("yaml_emitter_emit event_scalar\n");

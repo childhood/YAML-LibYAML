@@ -1,4 +1,10 @@
 ---
+version: 0.16
+date:    Thu May 31 13:46:50 PDT 2007
+changes:
+- Using a newer version of libyaml (0.1.1 cut of trunk).
+- Can dump scalars that need quoting without getting a !
+---
 version: 0.15
 date:    Wed May 30 20:16:22 PDT 2007
 changes:

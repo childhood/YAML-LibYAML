@@ -18,12 +18,14 @@ inc/Test/More.pm
 lib/YAML/LibYAML.pm
 LibYAML/api.c
 LibYAML/config.h
+LibYAML/dumper.c
 LibYAML/emitter.c
-LibYAML/include/ppport.h
 LibYAML/lib/YAML/LibYAML/XS.pm
+LibYAML/loader.c
 LibYAML/Makefile.PL
 LibYAML/parser.c
 LibYAML/perl_libyaml.c
+LibYAML/ppport.h
 LibYAML/ppport_sort.h
 LibYAML/reader.c
 LibYAML/scanner.c
