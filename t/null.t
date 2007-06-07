@@ -1,4 +1,4 @@
-use t::TestYAMLTests tests => 4;
+use t::TestYAMLTests tests => 5;
 
 my $array = [
     undef,
@@ -45,3 +45,14 @@ $perl = {foo => undef, bar => [undef, [undef]]};
 
 is_deeply Load($yaml), $perl,
     "Empty values Load as undefs";
+
+$yaml = <<'...';
+---
+- -
+- -
+...
+$perl = [[undef], [undef]];
+
+is_deeply Load($yaml), $perl,
+    "Can Load 'dash art'";
+

@@ -23,12 +23,62 @@ package YAML::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 use base 'Exporter';
 
 our @EXPORT = qw(Load Dump);
+# our $UseCode = 0;
+# our $DumpCode = 0;
+# our $LoadCode = 0;
 
 use YAML::LibYAML::XS qw(Load Dump);
+
+# XXX Figure out how to lazily load this module. 
+# So far I've tried using the C function:
+#      load_module(PERL_LOADMOD_NOIMPORT, newSVpv("B::Deparse", 0), NULL);
+# But it didn't seem to work.
+use B::Deparse;
+
+# XXX The following code should be moved from Perl to C.
+our $coderef2text = sub {
+    my $coderef = shift;
+    my $deparse = B::Deparse->new();
+    my $text;
+    eval {
+        local $^W = 0;
+        $text = $deparse->coderef2text($coderef);
+    };
+    if ($@) {
+        warn "YAML::LibYAML failed to dump code ref:\n$@";
+        return;
+    }
+
+    return $text;
+};
+
+our $glob2hash = sub {
+    my $hash = {};
+    for my $type (qw(PACKAGE NAME SCALAR ARRAY HASH CODE IO)) {
+        my $value = *{$_[0]}{$type};
+        $value = $$value if $type eq 'SCALAR';
+        if (defined $value) {
+            if ($type eq 'IO') {
+                my @stats = qw(device inode mode links uid gid rdev size
+                               atime mtime ctime blksize blocks);
+                undef $value;
+                $value->{stat} = {};
+                map {$value->{stat}{shift @stats} = $_} stat(*{$_[0]});
+                $value->{fileno} = fileno(*{$_[0]});
+                {
+                    local $^W;
+                    $value->{tell} = tell(*{$_[0]});
+                }
+            }
+            $hash->{$type} = $value;
+        }
+    }
+    return $hash;
+};
 
 1;
 
@@ -68,16 +118,12 @@ SUPPORTED:
   * JSON true/false roundtripping
   * Blessed stuff
   * Code refs
+  * Typeglobs 
+  * File handles (IO refs)
 
 UNSUPPORTED:
 
-  * Typeglobs 
   * Regexps
-  * File handles (IO refs)
-
-YAML::LibYAML currently serializes these things as good as most
-serializers, but YAML.pm goes farther and dumps these specially.
-YAML::LibYAML does not yet dump these fully.
 
 This work should progress quickly so check back often.
 

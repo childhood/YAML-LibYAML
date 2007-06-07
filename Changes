@@ -1,4 +1,10 @@
 ---
+version: 0.17
+date:    Wed Jun  6 19:48:52 PDT 2007
+changes:
+- Support code and glob dumping
+- Much refactoring.
+---
 version: 0.16
 date:    Thu May 31 13:46:50 PDT 2007
 changes:

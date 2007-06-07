@@ -31,16 +31,12 @@ DESCRIPTION
       * JSON true/false roundtripping
       * Blessed stuff
       * Code refs
+      * Typeglobs 
+      * File handles (IO refs)
 
     UNSUPPORTED:
 
-      * Typeglobs 
       * Regexps
-      * File handles (IO refs)
-
-    YAML::LibYAML currently serializes these things as good as most
-    serializers, but YAML.pm goes farther and dumps these specially.
-    YAML::LibYAML does not yet dump these fully.
 
     This work should progress quickly so check back often.
 
