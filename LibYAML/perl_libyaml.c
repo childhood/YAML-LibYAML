@@ -1,7 +1,7 @@
 #include "EXTERN.h"
 #include "perl.h"
-#include "ppport.h"
 #include "XSUB.h"
+#include "ppport.h"
 #include <yaml.h>
 #include <ppport_sort.h>
 
@@ -14,6 +14,7 @@ static SV*      find_coderef(char*);
 #define TAG_PERL_STR TAG_PERL_PREFIX "str"
 #define ERRMSG "YAML::XS Error: "
 #define LOADERRMSG "YAML::XS::Load Error: "
+#define DUMPERRMSG "YAML::XS::Dump Error: "
 
 typedef struct {
     yaml_parser_t parser;
@@ -123,11 +124,33 @@ static SV *find_coderef(char *perl_var) {
 char* loader_error_msg(perl_yaml_loader_t* loader, char* problem) {
     if (!problem)
         problem = (char*) loader->parser.problem;
-    return form(
-        LOADERRMSG "\n  problem: %s\n  document: %d\n",
-        problem,
+    char* msg = form(
+        LOADERRMSG 
+        "%swas found at "
+        "document: %d",
+        (problem ? form("The problem:\n\n    %s\n\n", problem) : "A problem "),
         loader->document
     );
+    if (
+        loader->parser.problem_mark.line ||
+        loader->parser.problem_mark.column
+    )
+        msg = form("%s, line: %d, column: %d\n",
+            msg,
+            loader->parser.problem_mark.line + 1,
+            loader->parser.problem_mark.column + 1
+        );
+    else
+        msg = form("%s\n", msg);
+    if (loader->parser.context)
+        msg = form("%s%s at line: %d, column: %d\n",
+            msg,
+            loader->parser.context,
+            loader->parser.context_mark.line + 1,
+            loader->parser.context_mark.column + 1
+        );
+
+    return msg;
 }
 
 void Load(char* yaml_str) {
@@ -141,23 +164,26 @@ void Load(char* yaml_str) {
         (unsigned char *) yaml_str,
         strlen((char *) yaml_str)
     );
-    yaml_parser_parse(&loader.parser, &loader.event);
+    if (!yaml_parser_parse(&loader.parser, &loader.event))
+        goto load_error;
     if (loader.event.type != YAML_STREAM_START_EVENT)
         croak(ERRMSG "Expected STREAM_START_EVENT; Got: %d != %d",
             loader.event.type,
             YAML_STREAM_START_EVENT
          );
     while (1) {
-        yaml_parser_parse(&loader.parser, &loader.event);
+        loader.document++;
+        if (!yaml_parser_parse(&loader.parser, &loader.event))
+            goto load_error;
         if (loader.event.type == YAML_STREAM_END_EVENT)
             break;
-        loader.document++;
         loader.anchors = newHV();
         node = load_node(&loader);
         SvREFCNT_dec((SV*)(loader.anchors));
         if (! node) break;
         XPUSHs(node);
-        yaml_parser_parse(&loader.parser, &loader.event);
+        if (!yaml_parser_parse(&loader.parser, &loader.event))
+            goto load_error;
         if (loader.event.type != YAML_DOCUMENT_END_EVENT)
             croak(ERRMSG "Expected DOCUMENT_END_EVENT");
     }
@@ -168,10 +194,15 @@ void Load(char* yaml_str) {
          );
     yaml_parser_delete(&loader.parser);
     PUTBACK;
+    return;
+
+load_error:
+    croak(loader_error_msg(&loader, NULL));
 }
 
 SV* load_node(perl_yaml_loader_t * loader) {
-    yaml_parser_parse(&loader->parser, &loader->event);
+    if (!yaml_parser_parse(&loader->parser, &loader->event))
+        goto load_error;
 
     if (loader->event.type == YAML_DOCUMENT_END_EVENT ||
         loader->event.type == YAML_MAPPING_END_EVENT ||
@@ -197,6 +228,9 @@ SV* load_node(perl_yaml_loader_t * loader) {
     }
 
     croak(ERRMSG "Invalid event '%d' at top level", (int) loader->event.type);
+
+load_error:
+    croak(loader_error_msg(loader, NULL));
 }
 
 SV* load_mapping(perl_yaml_loader_t * loader) {
@@ -222,7 +256,7 @@ SV* load_mapping(perl_yaml_loader_t * loader) {
         if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
         ) croak(
-            loader_error_msg(loader, form("Bad tag found for hash: '%s'", tag))
+            loader_error_msg(loader, form("bad tag found for hash: '%s'", tag))
         );
         char* class = tag + strlen(prefix);
         sv_bless(hash_ref, gv_stashpv(class, TRUE)); 
@@ -248,7 +282,7 @@ SV* load_sequence(perl_yaml_loader_t * loader) {
         if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
         ) croak(
-            loader_error_msg(loader, form("Bad tag found for array: '%s'", tag))
+            loader_error_msg(loader, form("bad tag found for array: '%s'", tag))
         );
         char* class = tag + strlen(prefix);
         sv_bless(array_ref, gv_stashpv(class, TRUE)); 
@@ -263,7 +297,7 @@ SV* load_scalar(perl_yaml_loader_t * loader) {
         char *prefix = TAG_PERL_PREFIX "scalar:";
         if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
-        ) croak(ERRMSG "Bad tag found for scalar: '%s'", tag);
+        ) croak(ERRMSG "bad tag found for scalar: '%s'", tag);
         char* class = tag + strlen(prefix);
         return sv_setref_pvn(newSV(0), class, string, strlen(string));
     }

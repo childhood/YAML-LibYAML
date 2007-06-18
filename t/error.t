@@ -1,7 +1,7 @@
-use t::TestYAMLTests tests => 6;
+use t::TestYAMLTests tests => 24;
 
 filters {
-    error => ['fixup', 'regexp'],
+    error => ['lines', 'chomp'],
 };
 
 run {
@@ -9,7 +9,16 @@ run {
     eval {
         Load($test->yaml);
     };
-    like $@, $test->error, $test->name;
+    for my $error ($test->error) {
+        if ($error =~ s/^!//) {
+            my $re = qr/$error/;
+            unlike $@, $re, $test->name . " (!~ /$error/)";
+        }
+        else {
+            my $re = qr/$error/;
+            like $@, $re, $test->name . " (=~ /$error/)";
+        }
+    }
 };
 
 sub fixup {
@@ -23,42 +32,54 @@ __DATA__
 foo: 2
  bar: 4
 +++ error
-  problem: mapping values are not allowed in this context
-  document: 1
+mapping values are not allowed in this context
+document: 1
+line: 2
+column: 5
 
 === Unquoted * as hash key
 +++ yaml
 *: foo
 +++ error
-  problem: did not find expected alphabetic or numeric character
-  document: 1
+did not find expected alphabetic or numeric character
+document: 1
+column: 2
+while scanning an alias
 
 === Unquoted * as hash value
 +++ yaml
 ---
 foo bar: *
 +++ error
-  problem: did not find expected alphabetic or numeric character
-  document: 1
+did not find expected alphabetic or numeric character
+document: 1
+line: 2
+column: 11
+while scanning an alias
 
 === Unquoted * as scalar
 +++ yaml
 --- xxx
 --- * * *
 +++ error
-  problem: did not find expected alphabetic or numeric character
-  document: 2
+did not find expected alphabetic or numeric character
+document: 2
+line: 2
+column: 6
+while scanning an alias
 
 === Bad tag for array
 +++ yaml
 --- !!foo []
 +++ error
-  problem: Bad tag found for array: 'tag:yaml.org,2002:foo'
-  document: 1
+bad tag found for array: 'tag:yaml.org,2002:foo'
+document: 1
 
 === Bad tag for hash
 +++ yaml
 --- !foo {}
 +++ error
-  problem: Bad tag found for hash: '!foo'
-  document: 1
+bad tag found for hash: '!foo'
+document: 1
+!line:
+!column:

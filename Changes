@@ -1,4 +1,8 @@
 ---
+version: 0.20
+date:    Mon Jun 18 16:29:33 PDT 2007
+changes: Better parse error messaging
+---
 version: 0.19
 date:    Mon Jun 18 00:54:40 PDT 2007
 changes: Fixed memory bugs
