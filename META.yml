@@ -1,4 +1,4 @@
-abstract: LibYAML bindings for Perl
+abstract: ~
 author: "Ingy d\xC3\xB6t Net <ingy@cpan.org>"
 distribution_type: module
 generated_by: Module::Install version 0.64
@@ -10,4 +10,4 @@ no_index:
     - t
 requires: 
   perl: 5.8.3
-version: 0.17
+version: 0.18

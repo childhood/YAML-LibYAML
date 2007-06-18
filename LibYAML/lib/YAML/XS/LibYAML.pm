@@ -1,10 +1,10 @@
-package YAML::LibYAML::XS;
+package YAML::XS::LibYAML;
 use 5.008003;
 use strict;
 use warnings;
 
 use XSLoader;
-XSLoader::load 'YAML::LibYAML::XS';
+XSLoader::load 'YAML::XS::LibYAML';
 use base 'Exporter';
 
 our @EXPORT_OK = qw(Load Dump);
@@ -13,6 +13,6 @@ our @EXPORT_OK = qw(Load Dump);
 
 =head1 NAME
 
-YAML::LibYAML::XS - An XS Wrapper Module of libyaml
+YAML::XS::LibYAML - An XS Wrapper Module of libyaml
 
 =cut

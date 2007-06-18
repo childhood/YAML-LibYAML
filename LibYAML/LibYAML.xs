@@ -4,7 +4,7 @@
 #include "ppport.h"
 #include <yaml.h>
 
-MODULE = YAML::LibYAML::XS		PACKAGE = YAML::LibYAML::XS		
+MODULE = YAML::XS::LibYAML		PACKAGE = YAML::XS::LibYAML		
 
 PROTOTYPES: DISABLE
 

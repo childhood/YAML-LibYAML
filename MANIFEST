@@ -16,11 +16,13 @@ inc/Test/Builder.pm
 inc/Test/Builder/Module.pm
 inc/Test/More.pm
 lib/YAML/LibYAML.pm
+lib/YAML/XS.pm
 LibYAML/api.c
 LibYAML/config.h
 LibYAML/dumper.c
 LibYAML/emitter.c
-LibYAML/lib/YAML/LibYAML/XS.pm
+LibYAML/lib/YAML/XS/LibYAML.pm
+LibYAML/LibYAML.xs
 LibYAML/loader.c
 LibYAML/Makefile.PL
 LibYAML/parser.c
@@ -31,7 +33,6 @@ LibYAML/reader.c
 LibYAML/scanner.c
 LibYAML/test.pl
 LibYAML/writer.c
-LibYAML/XS.xs
 LibYAML/yaml.h
 LibYAML/yaml_private.h
 Makefile.PL
@@ -48,11 +49,13 @@ t/code.t
 t/data/basic.t
 t/dump.t
 t/empty.t
+t/error.t
 t/glob.t
 t/load.t
 t/null.t
 t/quote.t
 t/ref-scalar.t
+t/tags.t
 t/TestYAML.pm
 t/TestYAMLTests.pm
 t/yaml_tests.yaml

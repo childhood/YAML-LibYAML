@@ -23,7 +23,7 @@ $yaml = <<'...';
   }
 ...
 
-$YAML::LibYAML::DumpCode = 1;
+$YAML::XS::DumpCode = 1;
 is Dump($sub), $yaml,
     "Dumping a blessed code ref works (with B::Deparse)";
 
@@ -35,7 +35,7 @@ $yaml = <<'...';
 --- !!perl/code:Barry::White '{ "DUMMY" }'
 ...
 
-$YAML::LibYAML::DumpCode = 0;
+$YAML::XS::DumpCode = 0;
 is Dump($sub), $yaml,
     "Dumping a blessed code ref works (with DUMMY again)";
 

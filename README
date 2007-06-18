@@ -1,8 +1,8 @@
 NAME
-    YAML::LibYAML - LibYAML bindings for Perl
+    YAML::XS - Perl YAML implementation using XS and libyaml
 
 SYNOPSIS
-        use YAML::LibYAML;
+        use YAML::XS;
 
         my $yaml = Dump [ 1..4 ];
         my $array = Load $yaml;
@@ -44,7 +44,7 @@ BUGS
     There are no known bugs in the libyaml C library yet. The code is nearly
     2 years old.
 
-    The YAML::LibYAML::XS binding is new. Bugs are likely. Please report all
+    The YAML::XS::LibYAML binding is new. Bugs are likely. Please report all
     bugs.
 
 SEE ALSO

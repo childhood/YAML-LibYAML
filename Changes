@@ -1,4 +1,12 @@
 ---
+version: 0.18
+date:    Sun Jun 17 18:33:41 PDT 2007
+changes:
+- Renamed to shorter YAML::XS
+- Load and Dump blessed scalar refs
+- Report Load errors
+- Allow !!hash and !!array
+---
 version: 0.17
 date:    Wed Jun  6 19:48:52 PDT 2007
 changes:

@@ -12,13 +12,15 @@ static SV*      find_coderef(char*);
 #define TAG_PERL_PREFIX "tag:yaml.org,2002:perl/"
 #define TAG_PERL_REF TAG_PERL_PREFIX "ref"
 #define TAG_PERL_STR TAG_PERL_PREFIX "str"
-#define ERRMSG "LibYAML Error - "
+#define ERRMSG "YAML::XS Error: "
+#define LOADERRMSG "YAML::XS::Load Error: "
 
 typedef struct {
     yaml_parser_t parser;
     yaml_event_t event;
     HV* anchors;
     int load_code;
+    int document;
 } perl_yaml_loader_t;
 
 typedef struct {
@@ -44,7 +46,7 @@ void dump_document(perl_yaml_dumper_t*, SV*);
 void dump_node(perl_yaml_dumper_t*, SV*);
 void dump_hash(perl_yaml_dumper_t *, SV*, yaml_char_t*, yaml_char_t*);
 void dump_array(perl_yaml_dumper_t*, SV*);
-void dump_scalar(perl_yaml_dumper_t*, SV*);
+void dump_scalar(perl_yaml_dumper_t*, SV*, yaml_char_t*);
 void dump_ref(perl_yaml_dumper_t*, SV*);
 void dump_code(perl_yaml_dumper_t*, SV*);
 SV* dump_glob(perl_yaml_dumper_t*, SV*);
@@ -118,11 +120,22 @@ static SV *find_coderef(char *perl_var) {
     return NULL;
 }
 
+char* loader_error_msg(perl_yaml_loader_t* loader, char* problem) {
+    if (!problem)
+        problem = (char*) loader->parser.problem;
+    return form(
+        LOADERRMSG "\n  problem: %s\n  document: %d\n",
+        problem,
+        loader->document
+    );
+}
+
 void Load(char* yaml_str) {
     dXSARGS; sp = mark;
     perl_yaml_loader_t loader;
     SV* node;
     yaml_parser_initialize(&loader.parser);
+    loader.document = 0;
     yaml_parser_set_input_string(
         &loader.parser,
         (unsigned char *) yaml_str,
@@ -130,11 +143,15 @@ void Load(char* yaml_str) {
     );
     yaml_parser_parse(&loader.parser, &loader.event);
     if (loader.event.type != YAML_STREAM_START_EVENT)
-        croak(ERRMSG "Expected STREAM_START_EVENT");
+        croak(ERRMSG "Expected STREAM_START_EVENT; Got: %d != %d",
+            loader.event.type,
+            YAML_STREAM_START_EVENT
+         );
     while (1) {
         yaml_parser_parse(&loader.parser, &loader.event);
         if (loader.event.type == YAML_STREAM_END_EVENT)
             break;
+        loader.document++;
         loader.anchors = newHV();
         node = load_node(&loader);
         sv_dec((SV*)loader.anchors);
@@ -144,24 +161,23 @@ void Load(char* yaml_str) {
         if (loader.event.type != YAML_DOCUMENT_END_EVENT)
             croak(ERRMSG "Expected DOCUMENT_END_EVENT");
     }
-    if (loader.event.type != YAML_STREAM_END_EVENT) {
+    if (loader.event.type != YAML_STREAM_END_EVENT)
         croak(ERRMSG "Expected STREAM_END_EVENT; Got: %d != %d",
             loader.event.type,
             YAML_STREAM_END_EVENT
          );
-    }
     yaml_parser_delete(&loader.parser);
     PUTBACK;
 }
 
 SV* load_node(perl_yaml_loader_t * loader) {
     yaml_parser_parse(&loader->parser, &loader->event);
-    char * tag = (char *)loader->event.data.mapping_start.tag;
 
     if (loader->event.type == YAML_DOCUMENT_END_EVENT ||
         loader->event.type == YAML_MAPPING_END_EVENT ||
         loader->event.type == YAML_SEQUENCE_END_EVENT) return NULL;
     if (loader->event.type == YAML_MAPPING_START_EVENT) {
+        char * tag = (char *)loader->event.data.mapping_start.tag;
         if (tag && strEQ(tag, TAG_PERL_REF))
             return load_scalar_ref(loader);
         return load_mapping(loader);
@@ -174,6 +190,10 @@ SV* load_node(perl_yaml_loader_t * loader) {
     }
     if (loader->event.type == YAML_ALIAS_EVENT) {
         return load_alias(loader);
+    }
+
+    if (loader->event.type == YAML_NO_EVENT) {
+        croak(loader_error_msg(loader, NULL));
     }
 
     croak(ERRMSG "Invalid event '%d' at top level", (int) loader->event.type);
@@ -195,11 +215,15 @@ SV* load_mapping(perl_yaml_loader_t * loader) {
             hash, SvPV_nolen(key_node), sv_len(key_node), value_node, 0
         );
     } 
+    if (tag && strEQ(tag, TAG_PERL_PREFIX "hash"))
+        tag = NULL;
     if (tag) {
         char* prefix = TAG_PERL_PREFIX "hash:";
         if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
-        ) croak(ERRMSG "Bad tag found for hash");
+        ) croak(
+            loader_error_msg(loader, form("Bad tag found for hash: '%s'", tag))
+        );
         char* class = tag + strlen(prefix);
         sv_bless(hash_ref, gv_stashpv(class, TRUE)); 
     }
@@ -217,11 +241,15 @@ SV* load_sequence(perl_yaml_loader_t * loader) {
     while (node = load_node(loader)) {
         av_push(array, node);
     } 
+    if (tag && strEQ(tag, TAG_PERL_PREFIX "array"))
+        tag = NULL;
     if (tag) {
         char* prefix = TAG_PERL_PREFIX "array:";
         if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
-        ) croak(ERRMSG "Bad tag found for array");
+        ) croak(
+            loader_error_msg(loader, form("Bad tag found for array: '%s'", tag))
+        );
         char* class = tag + strlen(prefix);
         sv_bless(array_ref, gv_stashpv(class, TRUE)); 
     }
@@ -230,6 +258,16 @@ SV* load_sequence(perl_yaml_loader_t * loader) {
 
 SV* load_scalar(perl_yaml_loader_t * loader) {
     char * string = (char *) loader->event.data.scalar.value;
+    char * tag = (char *)loader->event.data.scalar.tag;
+    if (tag) {
+        char *prefix = TAG_PERL_PREFIX "scalar:";
+        if (strlen(tag) <= strlen(prefix) ||
+            ! strnEQ(tag, prefix, strlen(prefix))
+        ) croak(ERRMSG "Bad tag found for scalar: '%s'", tag);
+        char* class = tag + strlen(prefix);
+        return sv_setref_pvn(newSV(0), class, string, strlen(string));
+    }
+
     if (loader->event.data.scalar.style == YAML_PLAIN_SCALAR_STYLE) {
         if (strEQ(string, "~")) {
             return &PL_sv_undef;
@@ -274,10 +312,10 @@ SV* load_scalar_ref(perl_yaml_loader_t * loader) {
 void set_dumper_options(perl_yaml_dumper_t* dumper) {
     GV* gv;
     dumper->dump_code = (
-        (gv = gv_fetchpv("YAML::LibYAML::UseCode", TRUE, SVt_PV)) &&
+        (gv = gv_fetchpv("YAML::XS::UseCode", TRUE, SVt_PV)) &&
         SvTRUE(GvSV(gv))
     ||
-        (gv = gv_fetchpv("YAML::LibYAML::DumpCode", TRUE, SVt_PV)) &&
+        (gv = gv_fetchpv("YAML::XS::DumpCode", TRUE, SVt_PV)) &&
         SvTRUE(GvSV(gv))
     );
 }
@@ -413,16 +451,23 @@ void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
         else if (ref_type == SVt_PVCV) {
             dump_code(dumper, node);
         }
+        else if (ref_type == SVt_PVMG) {
+            yaml_char_t* tag = (yaml_char_t*) form(
+                TAG_PERL_PREFIX "scalar:%s",
+                sv_reftype(SvRV(node), TRUE)
+            );
+            dump_scalar(dumper, SvRV(node), tag);
+        }
         else {
             printf(
-                "YAML::LibYAML dump unhandled ref. type == '%d'!\n",
+                "YAML::XS dump unhandled ref. type == '%d'!\n",
                 ref_type
             );
-            dump_scalar(dumper, SvRV(node));
+            dump_scalar(dumper, SvRV(node), NULL);
         }
     }
     else {
-        dump_scalar(dumper, node);
+        dump_scalar(dumper, node, NULL);
     }
 }
 
@@ -554,10 +599,17 @@ void dump_array(perl_yaml_dumper_t * dumper, SV * node) {
     yaml_emitter_emit(&dumper->emitter, &event_sequence_end);
 }
 
-void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
+void dump_scalar(perl_yaml_dumper_t * dumper, SV* node, yaml_char_t* tag) {
     yaml_event_t event_scalar;
     char * string;
-    yaml_char_t* tag = (yaml_char_t*) TAG_PERL_STR;
+    int plain_implicit, quoted_implicit;
+    if (tag) {
+        plain_implicit = quoted_implicit = 0;
+    }
+    else {
+        tag = (yaml_char_t*) TAG_PERL_STR;
+        plain_implicit = quoted_implicit = 1;
+    }
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
     svtype type = SvTYPE(node);
 
@@ -593,13 +645,14 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node) {
         tag,
         (unsigned char *) string,
         length,
-        1,
-        1,
+        plain_implicit,
+        quoted_implicit,
         style
     );
-    yaml_emitter_emit(&dumper->emitter, &event_scalar) ||
-        printf(
-            "emit scalar '%s', error: %s\n", string, dumper->emitter.problem
+    if (! yaml_emitter_emit(&dumper->emitter, &event_scalar))
+        croak(
+            ERRMSG "Emit scalar '%s', error: %s\n",
+            string, dumper->emitter.problem
         );
 }
 
@@ -609,7 +662,7 @@ void dump_code(perl_yaml_dumper_t * dumper, SV* node) {
     char * string = "{ \"DUMMY\" }";
     if (dumper->dump_code) {
         // load_module(PERL_LOADMOD_NOIMPORT, newSVpv("B::Deparse", 0), NULL);
-        SV* code = find_coderef("YAML::LibYAML::coderef2text");
+        SV* code = find_coderef("YAML::XS::coderef2text");
         AV* args = newAV();
         av_push(args, SvREFCNT_inc(node));
         args = (AV *) sv_2mortal((SV *) args);
@@ -638,7 +691,7 @@ void dump_code(perl_yaml_dumper_t * dumper, SV* node) {
 }
 
 SV* dump_glob(perl_yaml_dumper_t * dumper, SV* node) {
-    SV* code = find_coderef("YAML::LibYAML::glob2hash");
+    SV* code = find_coderef("YAML::XS::glob2hash");
     AV* args = newAV();
     av_push(args, SvREFCNT_inc(node));
     args = (AV *) sv_2mortal((SV *) args);

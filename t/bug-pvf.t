@@ -1,5 +1,5 @@
 use t::TestYAML tests => 1;
-use YAML::LibYAML;
+use YAML::XS;
 
 my $string = "foo %s bar";
 

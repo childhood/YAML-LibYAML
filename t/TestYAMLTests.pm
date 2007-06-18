@@ -1,6 +1,6 @@
 package t::TestYAMLTests;
 use Test::Base -Base;
-@t::TestYAMLTests::EXPORT = qw(Load Dump n2y y2n nyny);
+@t::TestYAMLTests::EXPORT = qw(Load Dump n2y y2n nyny get_block_by_name);
 
 sub load_config() {
     my $config_file = shift;
@@ -40,7 +40,9 @@ sub get_block_by_name() {
         $hash;
     };
     my $name = shift;
-    return $self->{blocks_by_name}{$name};
+    my $object = $self->{blocks_by_name}{$name}
+      or die "Can't find test named '$name'\n";
+    return $object;
 }
 
 sub nyny() {
@@ -97,3 +99,15 @@ sub Dump() {
 
 no_diff;
 delimiters ('===', '+++');
+
+package t::TestYAMLTests::Filter;
+use Test::Base::Filter -Base;
+
+sub load_yaml {
+    t::TestYAMLTests::Load(@_);
+}
+
+sub dump_yaml {
+    t::TestYAMLTests::Load(@_);
+}
+
