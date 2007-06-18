@@ -154,7 +154,7 @@ void Load(char* yaml_str) {
         loader.document++;
         loader.anchors = newHV();
         node = load_node(&loader);
-        sv_dec((SV*)loader.anchors);
+        SvREFCNT_dec((SV*)(loader.anchors));
         if (! node) break;
         XPUSHs(node);
         yaml_parser_parse(&loader.parser, &loader.event);
@@ -209,7 +209,7 @@ SV* load_mapping(perl_yaml_loader_t * loader) {
     if (anchor)
         hv_store(loader->anchors, anchor, strlen(anchor), hash_ref, 0);
     while (key_node = load_node(loader)) {
-        assert(SVPOK(key_node));
+        assert(SvPOK(key_node));
         value_node = load_node(loader);
         hv_store(
             hash, SvPV_nolen(key_node), sv_len(key_node), value_node, 0
@@ -288,7 +288,9 @@ SV* load_scalar(perl_yaml_loader_t * loader) {
 SV* load_alias(perl_yaml_loader_t * loader) {
     char * anchor = (char *) loader->event.data.alias.anchor;
     SV** entry = hv_fetch(loader->anchors, anchor, strlen(anchor), 0);
-    if (entry) return *entry;
+    if (entry) {
+        return SvREFCNT_inc(*entry);
+    }
     croak(ERRMSG "No anchor for alias '%s'", anchor);
 }
 
@@ -349,8 +351,8 @@ SV* Dump(SV * dummy, ...) {
         dump_prewalk(&dumper, ST(i));
         dump_document(&dumper, ST(i));
 
-        sv_dec((SV*)dumper.anchors);
-        sv_dec((SV*)dumper.shadows);
+        SvREFCNT_dec((SV*)(dumper.anchors));
+        SvREFCNT_dec((SV*)(dumper.shadows));
     }
     yaml_stream_end_event_initialize(&event_stream_end);
     yaml_emitter_emit(&dumper.emitter, &event_stream_end);
@@ -433,7 +435,7 @@ void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
         if (anchor && strEQ((char*)anchor, "")) return;
         SV** svr = hv_fetch(dumper->shadows, (char *)&node, sizeof(node), 0);
         if (svr) {
-            node = *svr;
+            node = SvREFCNT_inc(*svr);
         }
     }
 

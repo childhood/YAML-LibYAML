@@ -8,31 +8,6 @@ run {
     is_deeply [Load($block->yaml)], \@values, "Load - " . $block->name;
 };
 
-# typedef enum {
-#         SVt_NULL,       /* 0 */
-#         SVt_IV,         /* 1 */
-#         SVt_NV,         /* 2 */
-#         SVt_RV,         /* 3 */
-#         SVt_PV,         /* 4 */
-#         SVt_PVIV,       /* 5 */
-#         SVt_PVNV,       /* 6 */
-#         SVt_PVMG,       /* 7 */
-#         SVt_PVBM,       /* 8 */
-#         SVt_PVLV,       /* 9 */
-#         SVt_PVAV,       /* 10 */
-#         SVt_PVHV,       /* 11 */
-#         SVt_PVCV,       /* 12 */
-#         SVt_PVGV,       /* 13 */
-#         SVt_PVFM,       /* 14 */
-#         SVt_PVIO        /* 15 */
-# } svtype;
-
-# my $x = 222; "$x";
-# my $y = 2.2; "$y";
-# my $z = bless \$x, "zzz";
-# my $c = sub { my $a = 1 };
-# (\ undef, \ 42, \3.14, \\2, \"x", \$x, \$y, $z, $c, \*::);
-
 __DATA__
 
 === Simple scalar ref

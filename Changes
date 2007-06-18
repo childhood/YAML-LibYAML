@@ -1,4 +1,9 @@
 ---
+version: 0.19
+date:    Mon Jun 18 00:54:40 PDT 2007
+changes: Fixed memory bugs
+reported_by: avar
+---
 version: 0.18
 date:    Sun Jun 17 18:33:41 PDT 2007
 changes:

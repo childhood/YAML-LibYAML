@@ -18,14 +18,13 @@
 package YAML::XS;
 use 5.008003;
 use strict;
-use warnings;
-our $VERSION = '0.18';
+$YAML::XS::VERSION = '0.19';
 use base 'Exporter';
 
-our @EXPORT = qw(Load Dump);
-# our $UseCode = 0;
-# our $DumpCode = 0;
-# our $LoadCode = 0;
+@YAML::XS::EXPORT = qw(Load Dump);
+# $YAML::XS::UseCode = 0;
+# $YAML::XS::DumpCode = 0;
+# $YAML::XS::LoadCode = 0;
 
 use YAML::XS::LibYAML qw(Load Dump);
 
@@ -36,7 +35,7 @@ use YAML::XS::LibYAML qw(Load Dump);
 use B::Deparse;
 
 # XXX The following code should be moved from Perl to C.
-our $coderef2text = sub {
+$YAML::XS::coderef2text = sub {
     my $coderef = shift;
     my $deparse = B::Deparse->new();
     my $text;
@@ -52,7 +51,7 @@ our $coderef2text = sub {
     return $text;
 };
 
-our $glob2hash = sub {
+$YAML::XS::glob2hash = sub {
     my $hash = {};
     for my $type (qw(PACKAGE NAME SCALAR ARRAY HASH CODE IO)) {
         my $value = *{$_[0]}{$type};
