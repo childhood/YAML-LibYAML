@@ -253,7 +253,10 @@ SV* load_mapping(perl_yaml_loader_t * loader) {
         tag = NULL;
     if (tag) {
         char* prefix = TAG_PERL_PREFIX "hash:";
-        if (strlen(tag) <= strlen(prefix) ||
+        if (*tag == '!') {
+            prefix = "!";
+        }
+        else if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
         ) croak(
             loader_error_msg(loader, form("bad tag found for hash: '%s'", tag))
@@ -279,7 +282,10 @@ SV* load_sequence(perl_yaml_loader_t * loader) {
         tag = NULL;
     if (tag) {
         char* prefix = TAG_PERL_PREFIX "array:";
-        if (strlen(tag) <= strlen(prefix) ||
+        if (*tag == '!') {
+            prefix = "!";
+        }
+        else if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
         ) croak(
             loader_error_msg(loader, form("bad tag found for array: '%s'", tag))
@@ -292,6 +298,7 @@ SV* load_sequence(perl_yaml_loader_t * loader) {
 
 SV* load_scalar(perl_yaml_loader_t * loader) {
     char * string = (char *) loader->event.data.scalar.value;
+    STRLEN length = (STRLEN) loader->event.data.scalar.length;
     char * tag = (char *)loader->event.data.scalar.tag;
     if (tag) {
         char *prefix = TAG_PERL_PREFIX "scalar:";
@@ -316,7 +323,7 @@ SV* load_scalar(perl_yaml_loader_t * loader) {
             return &PL_sv_no;
         }
     }
-    return newSVpvn(string, strlen(string));
+    return newSVpvn(string, length);
 }
 
 SV* load_alias(perl_yaml_loader_t * loader) {
@@ -461,11 +468,11 @@ void dump_document(perl_yaml_dumper_t * dumper, SV* node) {
 void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_char_t* anchor = NULL;
     yaml_char_t* tag = NULL;
+
+    //     
     if (SvTYPE(node) == SVt_PVGV) {
         tag = (yaml_char_t*)TAG_PERL_PREFIX "glob";
-        if (!anchor) {
-            anchor = get_yaml_anchor(dumper, node);
-        }
+        anchor = get_yaml_anchor(dumper, node);
         if (anchor && strEQ((char*)anchor, "")) return;
         SV** svr = hv_fetch(dumper->shadows, (char *)&node, sizeof(node), 0);
         if (svr) {
@@ -638,6 +645,7 @@ void dump_array(perl_yaml_dumper_t * dumper, SV * node) {
 void dump_scalar(perl_yaml_dumper_t * dumper, SV* node, yaml_char_t* tag) {
     yaml_event_t event_scalar;
     char * string;
+    STRLEN string_len;
     int plain_implicit, quoted_implicit;
     if (tag) {
         plain_implicit = quoted_implicit = 0;
@@ -651,18 +659,21 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node, yaml_char_t* tag) {
 
     if (type == SVt_NULL) {
         string = "~";
+        string_len = 1;
         style = YAML_PLAIN_SCALAR_STYLE;
     }
     else if (node == &PL_sv_yes) {
         string = "true";
+        string_len = 4;
         style = YAML_PLAIN_SCALAR_STYLE;
     }
     else if (node == &PL_sv_no) {
         string = "false";
+        string_len = 5;
         style = YAML_PLAIN_SCALAR_STYLE;
     }
     else {
-        string = SvPV_nolen(node);
+        string = SvPV(node, string_len);
         if (
             (strlen(string) == 0) ||
             strEQ(string, "~") ||
@@ -674,13 +685,12 @@ void dump_scalar(perl_yaml_dumper_t * dumper, SV* node, yaml_char_t* tag) {
             style = YAML_SINGLE_QUOTED_SCALAR_STYLE;
         }
     }
-    int length = strlen(string);
     yaml_scalar_event_initialize(
         &event_scalar,
         NULL,
         tag,
         (unsigned char *) string,
-        length,
+        (int) string_len,
         plain_implicit,
         quoted_implicit,
         style

@@ -8,4 +8,6 @@ use_yaml_tests;
 
 build_subdirs    'LibYAML';
 
+clean_files      't/output';
+
 WriteAll;

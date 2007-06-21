@@ -1,11 +1,11 @@
 # ToDo:
 #
+# - Support/test unicode
 # - Rewrite documentation
 # - Copy all relevant code from YAML::Syck
+#   - Review YAML::Syck Changes file
 #
 # Types:
-# - Blessed scalar refs
-# - Globs
 # - Regexps
 #
 # Tests:
@@ -18,15 +18,47 @@
 package YAML::XS;
 use 5.008003;
 use strict;
-$YAML::XS::VERSION = '0.20';
+$YAML::XS::VERSION = '0.21';
 use base 'Exporter';
 
 @YAML::XS::EXPORT = qw(Load Dump);
+@YAML::XS::EXPORT_OK = qw(LoadFile DumpFile);
 # $YAML::XS::UseCode = 0;
 # $YAML::XS::DumpCode = 0;
 # $YAML::XS::LoadCode = 0;
 
 use YAML::XS::LibYAML qw(Load Dump);
+
+sub DumpFile {
+    my $OUT;
+    my $filename = shift;
+    if (ref $filename eq 'GLOB') {
+        $OUT = $filename;
+    }
+    else {
+        my $mode = '>';
+        if ($filename =~ /^\s*(>{1,2})\s*(.*)$/) {
+            ($mode, $filename) = ($1, $2);
+        }
+        open $OUT, $mode, $filename
+          or die "Can't open '$filename' for output:\n$!";
+    }
+    local $/ = "\n"; # reset special to "sane"
+    print $OUT YAML::XS::LibYAML::Dump(@_);
+}
+
+sub LoadFile {
+    my $IN;
+    my $filename = shift;
+    if (ref $filename eq 'GLOB') {
+        $IN = $filename;
+    }
+    else {
+        open $IN, $filename
+          or die "Can't open '$filename' for input:\n$!";
+    }
+    return YAML::XS::LibYAML::Load(do { local $/; <$IN> });
+}
 
 # XXX Figure out how to lazily load this module. 
 # So far I've tried using the C function:

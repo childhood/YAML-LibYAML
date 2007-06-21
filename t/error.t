@@ -21,11 +21,6 @@ run {
     }
 };
 
-sub fixup {
-    s/^\s+/\\s+/gm;
-    s/\n/\\n/g;
-}
-
 __DATA__
 === Bad hash indentation
 +++ yaml
@@ -77,9 +72,9 @@ document: 1
 
 === Bad tag for hash
 +++ yaml
---- !foo {}
+--- !!!foo {}
 +++ error
-bad tag found for hash: '!foo'
+bad tag found for hash: 'tag:yaml.org,2002:!foo'
 document: 1
 !line:
 !column:

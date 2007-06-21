@@ -50,11 +50,14 @@ t/data/basic.t
 t/dump.t
 t/empty.t
 t/error.t
+t/file.t
 t/glob.t
 t/load.t
 t/null.t
+t/private.t
 t/quote.t
 t/ref-scalar.t
+t/string_nulls.t
 t/tags.t
 t/TestYAML.pm
 t/TestYAMLTests.pm

@@ -1,4 +1,11 @@
 ---
+version: 0.21
+date:    Thu Jun 21 15:08:03 PDT 2007
+changes:
+- Add Loadfile and Dumpfile functions
+- Support !foo private tags for Load - for David Garamond
+- Support Dump/Load of strings with nulls
+---
 version: 0.20
 date:    Mon Jun 18 16:29:33 PDT 2007
 changes: Better parse error messaging
