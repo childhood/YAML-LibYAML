@@ -302,7 +302,10 @@ SV* load_scalar(perl_yaml_loader_t * loader) {
     char * tag = (char *)loader->event.data.scalar.tag;
     if (tag) {
         char *prefix = TAG_PERL_PREFIX "scalar:";
-        if (strlen(tag) <= strlen(prefix) ||
+        if (*tag == '!') {
+            prefix = "!";
+        }
+        else if (strlen(tag) <= strlen(prefix) ||
             ! strnEQ(tag, prefix, strlen(prefix))
         ) croak(ERRMSG "bad tag found for scalar: '%s'", tag);
         char* class = tag + strlen(prefix);
@@ -533,7 +536,7 @@ yaml_char_t* get_yaml_anchor(perl_yaml_dumper_t * dumper, SV* node) {
 
 yaml_char_t* get_yaml_tag(SV* node) {
     if (! (
-        sv_isobject(node) || 
+        sv_isobject(node) ||
         SvRV(node) && (
             SvTYPE(SvRV(node)) == SVt_PVCV
         )
@@ -545,19 +548,6 @@ yaml_char_t* get_yaml_tag(SV* node) {
         case SVt_PVAV: { type = "array"; break; }
         case SVt_PVHV: { type = "hash"; break; }
         case SVt_PVCV: { type = "code"; break; }
-        case SVt_PVGV: { type = "glob"; break; }
-
-/* flatten scalar ref objects so that they dump as !perl/scalar:Foo::Bar foo */
-        case SVt_PVMG: {
-            if ( !SvROK(SvRV(node)) ) {
-                type = "scalar";
-                node = SvRV(node);
-                break;
-            } else {
-                type = "ref";
-                break;
-            }
-        }
     }
     yaml_char_t* tag;
     if ((strlen(type) == 0))

@@ -1,4 +1,9 @@
 ---
+version: 0.22
+date:    Fri Jun 22 00:38:14 PDT 2007
+changes:
+- Support !foo private tags for Loading scalar refs - for David Garamond
+---
 version: 0.21
 date:    Thu Jun 21 15:08:03 PDT 2007
 changes:
