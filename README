@@ -33,10 +33,11 @@ DESCRIPTION
       * Code refs
       * Typeglobs 
       * File handles (IO refs)
+      * Regexps
 
     UNSUPPORTED:
 
-      * Regexps
+      * All known basic types are supported.
 
     This work should progress quickly so check back often.
 

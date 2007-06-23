@@ -5,10 +5,8 @@
 # - Copy all relevant code from YAML::Syck
 #   - Review YAML::Syck Changes file
 #
-# Types:
-# - Regexps
-#
 # Tests:
+# - Abstract all tests to YAML::Tests
 # - http://svn.ali.as/cpan/concept/cpan-yaml-tiny/
 #
 # Profiling:
@@ -18,7 +16,7 @@
 package YAML::XS;
 use 5.008003;
 use strict;
-$YAML::XS::VERSION = '0.22';
+$YAML::XS::VERSION = '0.23';
 use base 'Exporter';
 
 @YAML::XS::EXPORT = qw(Load Dump);
@@ -79,6 +77,8 @@ $YAML::XS::coderef2text = sub {
         warn "YAML::XS failed to dump code ref:\n$@";
         return;
     }
+    $text =~ s[BEGIN \{\$\{\^WARNING_BITS\} = "UUUUUUUUUUUU\\001"\}]
+              [use warnings;]g;
 
     return $text;
 };
@@ -106,6 +106,35 @@ $YAML::XS::glob2hash = sub {
     }
     return $hash;
 };
+
+use constant _QR_MAP => {
+    '' => sub { qr{$_[0]} },
+    x => sub { qr{$_[0]}x },
+    i => sub { qr{$_[0]}i },
+    s => sub { qr{$_[0]}s },
+    m => sub { qr{$_[0]}m },
+    ix => sub { qr{$_[0]}ix },
+    sx => sub { qr{$_[0]}sx },
+    mx => sub { qr{$_[0]}mx },
+    si => sub { qr{$_[0]}si },
+    mi => sub { qr{$_[0]}mi },
+    ms => sub { qr{$_[0]}sm },
+    six => sub { qr{$_[0]}six },
+    mix => sub { qr{$_[0]}mix },
+    msx => sub { qr{$_[0]}msx },
+    msi => sub { qr{$_[0]}msi },
+    msix => sub { qr{$_[0]}msix },
+};
+
+sub __qr_loader {
+    if ($_[0] =~ /\A  \(\?  ([ixsm]*)  (?:-  (?:[ixsm]*))?  : (.*) \)  \z/x) {
+        my $sub = _QR_MAP->{$1} || _QR_MAP->{''};
+        &$sub($2);
+    }
+    else {
+        qr/$_[0]/;
+    }
+}
 
 1;
 
@@ -147,10 +176,11 @@ SUPPORTED:
   * Code refs
   * Typeglobs 
   * File handles (IO refs)
+  * Regexps
 
 UNSUPPORTED:
 
-  * Regexps
+  * All known basic types are supported.
 
 This work should progress quickly so check back often.
 

@@ -1,4 +1,10 @@
 ---
+version: 0.23
+date:    Fri Jun 22 17:56:50 PDT 2007
+changes:
+- Added full regexp Dump and Load support. Borrowed code from YAML::Syck.
+  Discovered/reported bugs in the same.
+---
 version: 0.22
 date:    Fri Jun 22 00:38:14 PDT 2007
 changes:

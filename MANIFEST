@@ -57,6 +57,7 @@ t/null.t
 t/private.t
 t/quote.t
 t/ref-scalar.t
+t/regexp.t
 t/string_nulls.t
 t/tags.t
 t/TestYAML.pm
