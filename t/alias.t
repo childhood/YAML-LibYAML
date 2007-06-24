@@ -1,4 +1,4 @@
-use t::TestYAMLTests tests => 5;
+use t::TestYAMLTests tests => 6;
 
 my ($a, $b) = Load(<<'...');
 ---
@@ -28,7 +28,6 @@ is Dump($array), <<'...', 'Duplicate node has anchor/alias';
 my $list = [];
 push @$list, $list;
 push @$list, $array;
-
 is Dump($list), <<'...', 'Dump of multiple and circular aliases';
 --- &1
 - *1
@@ -36,4 +35,24 @@ is Dump($list), <<'...', 'Dump of multiple and circular aliases';
     xxx: yyy
   - hello
   - *2
+...
+
+my $hash = {};
+$hash->{a1} = $hash->{a2} = [];
+$hash->{b1} = $hash->{b2} = [];
+$hash->{c1} = $hash->{c2} = [];
+$hash->{d1} = $hash->{d2} = [];
+$hash->{e1} = $hash->{e2} = [];
+is Dump($hash), <<'...', 'Alias Order is Correct';
+---
+a1: &1 []
+a2: *1
+b1: &2 []
+b2: *2
+c1: &3 []
+c2: *3
+d1: &4 []
+d2: *4
+e1: &5 []
+e2: *5
 ...

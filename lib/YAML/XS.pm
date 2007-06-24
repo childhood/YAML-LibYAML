@@ -1,9 +1,14 @@
 # ToDo:
 #
-# - Support/test unicode
 # - Rewrite documentation
 # - Copy all relevant code from YAML::Syck
 #   - Review YAML::Syck Changes file
+# - Make YAML a prereq for YAML-LibYAML
+# - Make loading regexp use code from YAML::Types
+# - Make glob dumping use YAML::Node
+# - Move all YAML and YAML::XS tests to YAML::Tests
+#   - Make YAML and YAML::XS pass all common tests
+# - Add scalar dumping heuristics similar to YAML.pm
 #
 # Tests:
 # - Abstract all tests to YAML::Tests
@@ -13,10 +18,12 @@
 # - TonyC: sprof if I can remember the way to enable shared library profiling
 # - TonyC: LD_PROFILE, but that may not work on OS X
 # - TonyC: sample or Sampler.app on OS X, I'd guess
+
+
 package YAML::XS;
 use 5.008003;
 use strict;
-$YAML::XS::VERSION = '0.23';
+$YAML::XS::VERSION = '0.24';
 use base 'Exporter';
 
 @YAML::XS::EXPORT = qw(Load Dump);
@@ -177,6 +184,7 @@ SUPPORTED:
   * Typeglobs 
   * File handles (IO refs)
   * Regexps
+  * Unicode
 
 UNSUPPORTED:
 

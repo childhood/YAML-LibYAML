@@ -1,4 +1,10 @@
 ---
+version: 0.24
+date:    Sun Jun 24 10:29:03 PDT 2007
+changes:
+- Turn on unicode dumping support.
+- Make anchor numbers Dump in order.
+---
 version: 0.23
 date:    Fri Jun 22 17:56:50 PDT 2007
 changes:

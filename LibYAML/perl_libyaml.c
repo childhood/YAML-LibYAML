@@ -407,6 +407,7 @@ SV* Dump(SV * dummy, ...) {
     set_dumper_options(&dumper);
 
     yaml_emitter_initialize(&dumper.emitter);
+    yaml_emitter_set_unicode(&dumper.emitter, 1);
     yaml_emitter_set_width(&dumper.emitter, 2);
     yaml_emitter_set_output(
         &dumper.emitter,
@@ -419,7 +420,7 @@ SV* Dump(SV * dummy, ...) {
     );
     yaml_emitter_emit(&dumper.emitter, &event_stream_start);
     for (i = 0; i < items; i++) {
-        dumper.anchor = 1;
+        dumper.anchor = 0;
         dumper.anchors = newHV();
         dumper.shadows = newHV();
 
@@ -447,9 +448,8 @@ void dump_prewalk(perl_yaml_dumper_t * dumper, SV* node) {
         if (*seen == &PL_sv_undef) {
             hv_store(
                 dumper->anchors, (char *)&object, sizeof(object),
-                newSViv(dumper->anchor), 0
+                &PL_sv_yes, 0
             );
-            dumper->anchor++;
         }
         return;
     }
@@ -564,17 +564,20 @@ void dump_node(perl_yaml_dumper_t * dumper, SV* node) {
 
 yaml_char_t* get_yaml_anchor(perl_yaml_dumper_t * dumper, SV* node) {
     yaml_event_t event_alias;
-    yaml_char_t* anchor = NULL;
     SV** seen = hv_fetch(dumper->anchors, (char *)&node, sizeof(node), 0);
     if (seen && *seen != &PL_sv_undef) {
-        anchor = (yaml_char_t*)SvPV_nolen(*seen);
-        if (SvREADONLY(*seen)) {
+        if (*seen == &PL_sv_yes) {
+            dumper->anchor++;
+            SV* iv = newSViv(dumper->anchor);
+            hv_store(dumper->anchors, (char *)&node, sizeof(node), iv, 0);
+            return (yaml_char_t*)SvPV_nolen(iv);
+        }
+        else {
+            yaml_char_t* anchor = (yaml_char_t*)SvPV_nolen(*seen);
             yaml_alias_event_initialize(&event_alias, anchor);
             yaml_emitter_emit(&dumper->emitter, &event_alias);
             return (yaml_char_t *) "";
         }
-        SvREADONLY_on(*seen);
-        return anchor;
     }
     return NULL;
 }

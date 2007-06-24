@@ -60,6 +60,7 @@ t/ref-scalar.t
 t/regexp.t
 t/string_nulls.t
 t/tags.t
+t/utf8.t
 t/TestYAML.pm
 t/TestYAMLTests.pm
 t/yaml_tests.yaml
