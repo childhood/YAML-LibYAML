@@ -1,4 +1,4 @@
-use t::TestYAMLTests tests => 6;
+use t::TestYAMLTests tests => 10;
 
 my ($a, $b) = Load(<<'...');
 ---
@@ -56,3 +56,26 @@ d2: *4
 e1: &5 []
 e2: *5
 ...
+
+my $yaml = <<'...';
+---
+foo: &text |
+  sub foo {
+      print "hello\n";
+  }
+bar: *text
+...
+
+$hash = Load($yaml);
+is $hash->{bar}, $hash->{foo}, 'Scalar anchor/aliases Load';
+like $hash->{bar}, qr/"hello/, 'Aliased scalar has correct value';
+
+$yaml = <<'...';
+---
+foo: &rx !!perl/regexp (?-xsim:lala)
+bar: *rx
+...
+
+$hash = Load($yaml);
+is $hash->{bar}, $hash->{foo}, 'Regexp anchor/aliases Load';
+like "falala", $hash->{bar}, 'Aliased regexp works';

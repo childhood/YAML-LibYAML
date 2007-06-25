@@ -1,8 +1,10 @@
-#include "EXTERN.h"
-#include "perl.h"
-#include "XSUB.h"
-#include "ppport.h"
-#include <yaml.h>
+#include <perl_libyaml.h>
+/* XXX Make -Wall not complain about 'local_patches' not being used. */
+#if !defined(PERL_PATCHLEVEL_H_IMPLICIT)
+void xxx_local_patches_xs() {
+    printf("%s", local_patches[0]);
+}
+#endif
 
 MODULE = YAML::XS::LibYAML		PACKAGE = YAML::XS::LibYAML		
 
@@ -19,9 +21,7 @@ Load (yaml_str)
 void
 Dump (...)
         PPCODE:
-        SV * dummy;
+        SV * dummy = NULL;
         PL_markstack_ptr++;
         Dump(dummy);
         return;
-
-

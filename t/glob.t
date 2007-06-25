@@ -22,17 +22,28 @@ NAME: G1
 PACKAGE: main
 SCALAR: Hello
 ...
+
+exit;
+
 eval '@main::G1 = (1..3)';
 
-# is Dump([*G1, *G1]), <<'...', "Globs and aliases";
-# ---
-# - &1 !!perl/glob
-#   ARRAY:
-#   - 1
-#   - 2
-#   - 3
-#   NAME: G1
-#   PACKAGE: main
-#   SCALAR: Hello
-# - *1
-# ...
+my $g = *G1;
+
+is Dump(\$g), <<'...', "Ref to glob";
+--- !!perl/ref
+=: !!perl/glob
+...
+
+my $array = [\$g, \$g, \*G1];
+is Dump($array), <<'...', "Globs and aliases";
+---
+- &1 !!perl/glob
+  ARRAY:
+  - 1
+  - 2
+  - 3
+  NAME: G1
+  PACKAGE: main
+  SCALAR: Hello
+- *1
+...

@@ -1,4 +1,10 @@
 ---
+version: 0.25
+date:    Sun Jun 24 17:39:13 PDT 2007
+changes:
+- Squelch most -pedantic C warnings. Thanks audreyt.
+- Allow anchored and aliased scalars (and regexps) to be Loaded
+---
 version: 0.24
 date:    Sun Jun 24 10:29:03 PDT 2007
 changes:

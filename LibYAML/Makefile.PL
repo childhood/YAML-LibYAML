@@ -11,6 +11,10 @@ my $obj_files = join ' ', map {
 WriteMakefile(
     NAME => 'YAML::XS::LibYAML',
     PREREQ_PM => {},
+    # CCFLAGS => '-ansi -pedantic -Wall',
+    # CCFLAGS => '-ansi -Wall',
+    # CCFLAGS => '-pedantic -Wall',
+    # CCFLAGS => '-Wall',
     DEFINE => '-DHAVE_CONFIG_H',
     LIBS => [''], # e.g., '-lm'
     INC => '-I.',

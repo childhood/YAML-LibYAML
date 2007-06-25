@@ -27,6 +27,7 @@ LibYAML/loader.c
 LibYAML/Makefile.PL
 LibYAML/parser.c
 LibYAML/perl_libyaml.c
+LibYAML/perl_libyaml.h
 LibYAML/ppport.h
 LibYAML/ppport_sort.h
 LibYAML/reader.c
