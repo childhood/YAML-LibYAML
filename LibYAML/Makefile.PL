@@ -8,6 +8,9 @@ my $obj_files = join ' ', map {
     $c;
 } glob("*.c"), 'LibYAML.c';
 
+my $DEFINE = $^O eq 'MSWin32'
+? '-DHAVE_CONFIG_H -DYAML_DECLARE_EXPORT'
+: '-DHAVE_CONFIG_H';
 WriteMakefile(
     NAME => 'YAML::XS::LibYAML',
     PREREQ_PM => {},
@@ -15,7 +18,7 @@ WriteMakefile(
     # CCFLAGS => '-ansi -Wall',
     # CCFLAGS => '-pedantic -Wall',
     # CCFLAGS => '-Wall',
-    DEFINE => '-DHAVE_CONFIG_H',
+    DEFINE => $DEFINE,
     LIBS => [''], # e.g., '-lm'
     INC => '-I.',
     OBJECT => $obj_files,

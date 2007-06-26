@@ -1,5 +1,7 @@
 # ToDo:
 #
+# - Load globs
+# - Dump *foo{IO} and *foo{FORMAT}
 # - Rewrite documentation
 # - Copy all relevant code from YAML::Syck
 #   - Review YAML::Syck Changes file
@@ -23,11 +25,14 @@
 package YAML::XS;
 use 5.008003;
 use strict;
-$YAML::XS::VERSION = '0.25';
+$YAML::XS::VERSION = '0.26';
 use base 'Exporter';
 
 @YAML::XS::EXPORT = qw(Load Dump);
 @YAML::XS::EXPORT_OK = qw(LoadFile DumpFile);
+%YAML::XS::EXPORT_TAGS = (
+    all => [qw(Dump Load LoadFile DumpFile)],
+);
 # $YAML::XS::UseCode = 0;
 # $YAML::XS::DumpCode = 0;
 # $YAML::XS::LoadCode = 0;
@@ -185,6 +190,7 @@ SUPPORTED:
   * File handles (IO refs)
   * Regexps
   * Unicode
+  * Unix and Win32
 
 UNSUPPORTED:
 

@@ -1,4 +1,12 @@
 ---
+version: 0.26
+date:    Mon Jun 25 00:14:19 PDT 2007
+changes:
+- Refactor to consistent pointer & declaration syntax
+- Start commenting the C code.
+- Make YAML::XS work on Win32 by adding -DYAML_DECLARE_EXPORT. (Tested on
+  StrawberryPerl)
+---
 version: 0.25
 date:    Sun Jun 24 17:39:13 PDT 2007
 changes:
