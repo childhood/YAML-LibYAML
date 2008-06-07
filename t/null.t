@@ -3,12 +3,13 @@ use t::TestYAMLTests tests => 5;
 my $array = [
     undef,
     'undef',
-    undef,
+    33,
     '~',
     undef,
     undef,
     '~/file.txt',
 ];
+undef $array->[2];
 
 my $yaml = Dump($array);
 

@@ -117,6 +117,6 @@ yaml_char_t *
 get_yaml_tag(SV *);
 
 
-void
+int
 append_output(SV *, unsigned char *, unsigned int size);
 

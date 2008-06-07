@@ -25,7 +25,7 @@
 package YAML::XS;
 use 5.008003;
 use strict;
-$YAML::XS::VERSION = '0.26';
+$YAML::XS::VERSION = '0.27';
 use base 'Exporter';
 
 @YAML::XS::EXPORT = qw(Load Dump);
@@ -150,6 +150,8 @@ sub __qr_loader {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 YAML::XS - Perl YAML implementation using XS and libyaml
@@ -219,7 +221,7 @@ Ingy döt Net <ingy@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2007. Ingy döt Net. All rights reserved.
+Copyright (c) 2007, 2008. Ingy döt Net.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

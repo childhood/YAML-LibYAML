@@ -1,4 +1,4 @@
-use t::TestYAMLTests tests => 10;
+use t::TestYAMLTests tests => 11;
 
 run {
     my $block = shift;
@@ -7,6 +7,19 @@ run {
         unless $block->SKIP_DUMP;
     is_deeply [Load($block->yaml)], \@values, "Load - " . $block->name;
 };
+
+my @warn;
+$SIG{__WARN__} = sub { push(@warn, shift) };
+my $z = YAML::XS::Load(<<EOY);
+---
+foo:
+  - url: &1
+      scheme: http
+EOY
+pop @{$z->{foo}};
+
+is_deeply \@warn, [], "No free of unref warnings";
+
 
 __DATA__
 
