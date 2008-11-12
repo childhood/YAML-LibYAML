@@ -1,4 +1,4 @@
-use t::TestYAML tests => 6;
+use t::TestYAML tests => 7;
 
 use YAML::XS qw'LoadFile';
 
@@ -21,3 +21,11 @@ ok -f $test_file, 'YAML output file exists';
 my ($t1_, $t2_) = LoadFile($test_file);
 
 is_deeply [$t1_, $t2_], [$t1, $t2], 'File roundtrip ok';
+
+my $t3 = {"foo\x{123}" => [1..4]};
+my $t4 = "howdy ho \x{5050}";
+YAML::XS::DumpFile($test_file, $t3, $t4);
+
+my ($t3_, $t4_) = LoadFile($test_file);
+
+is_deeply [$t3_, $t4_], [$t3, $t4], 'Unicode roundtrip ok';

@@ -1,4 +1,18 @@
 ---
+version: 0.29
+date:    Tue Nov 11 22:57:07 PST 2008
+changes:
+- Check SvNIOK when dumping and format if quotes when it's a string that looks
+  like a number
+- Parse plain scalars as numbers when they look like numbers
+- Load nulls as newSV(0) instead of &PL_sv_undef to avoid "Modification of
+  non-creatable hash value attempted" errors
+---
+version: 0.28
+date:    Mon Jun 23 15:23:24 PDT 2008
+changes:
+- Apply UTF8 patch supplied by KLEINJ in rt.cpan#36734
+---
 version: 0.27
 date:    Fri Jun  6 22:05:29 PDT 2008
 changes:

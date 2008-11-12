@@ -55,7 +55,7 @@ void
 Dump(SV *, ...);
 
 void
-Load(char *);
+Load(SV *);
 
 SV *
 load_node(perl_yaml_loader_t *);
@@ -118,5 +118,5 @@ get_yaml_tag(SV *);
 
 
 int
-append_output(SV *, unsigned char *, unsigned int size);
+append_output(void *, unsigned char *, unsigned int size);
 

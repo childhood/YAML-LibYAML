@@ -1,4 +1,10 @@
-use t::TestYAMLTests tests => 4;
+use t::TestYAMLTests tests => 8;
+use utf8;
+
+is Dump("\x{100}"), "--- \xC4\x80\n", 'Dumping wide char works';
+is Load("--- \xC4\x80\n"), "\x{100}", 'Loading UTF-8 works';
+is Load("\xFE\xFF\0-\0-\0-\0 \x01\x00\0\n"), "\x{100}", 'Loading UTF-16BE works';
+is Load("\xFF\xFE-\0-\0-\0 \0\x00\x01\n\0"), "\x{100}", 'Loading UTF-16LE works';
 
 my $hash = {
     '店名' => 'OpCafé',
@@ -23,6 +29,8 @@ Email: boss@opcafe.net
 
 '
 ...
+
+utf8::encode($yaml);
 
 is Dump($hash), $yaml, 'Dumping Chinese hash works';
 is_deeply Load($yaml), $hash, 'Loading Chinese hash works';
@@ -52,6 +60,8 @@ my $yaml2 = <<'...';
     場所: サンフランシスコ
   名前: Plagger
 ...
+
+utf8::encode($yaml2);
 
 is Dump($hash2), $yaml2, 'Dumping Japanese hash works';
 is_deeply Load($yaml2), $hash2, 'Loading Japanese hash works';

@@ -25,7 +25,7 @@
 package YAML::XS;
 use 5.008003;
 use strict;
-$YAML::XS::VERSION = '0.27';
+$YAML::XS::VERSION = '0.29';
 use base 'Exporter';
 
 @YAML::XS::EXPORT = qw(Load Dump);
@@ -154,7 +154,7 @@ sub __qr_loader {
 
 =head1 NAME
 
-YAML::XS - Perl YAML implementation using XS and libyaml
+YAML::XS - Perl YAML Serialization using XS and libyaml
 
 =head1 SYNOPSIS
 
@@ -169,51 +169,17 @@ Kirill Siminov's C<libyaml> is arguably the best YAML implementation.
 The C library is written precisely to the YAML 1.1 specification. It was
 originally bound to Python and was later bound to Ruby.
 
-This module is a Perl XS binding to libyaml which will (eventually)
-offer Perl the best YAML support to date.
+This module is a Perl XS binding to libyaml which offers Perl the best YAML
+support to date.
 
 This module exports the functions C<Dump> and C<Load>. These functions
 are intended to work exactly like C<YAML.pm>'s corresponding functions.
-
-SUPPORTED:
-
-  * Unblessed hashes
-  * Unblessed arrays
-  * Unblessed scalars
-  * Duplicate hash/array refs
-  * Circular refs
-  * Scalar refs
-  * Empty Strings
-  * Undef values
-  * JSON true/false roundtripping
-  * Blessed stuff
-  * Code refs
-  * Typeglobs 
-  * File handles (IO refs)
-  * Regexps
-  * Unicode
-  * Unix and Win32
-
-UNSUPPORTED:
-
-  * All known basic types are supported.
-
-This work should progress quickly so check back often.
-
-=head1 BUGS
-
-There are no known bugs in the libyaml C library yet. The code is nearly
-2 years old.
-
-The YAML::XS::LibYAML binding is new. Bugs are likely. Please
-report all bugs.
 
 =head1 SEE ALSO
 
  * YAML.pm
  * YAML::Syck
  * YAML::Tiny
- * YAML::Tests
 
 =head1 AUTHOR
 

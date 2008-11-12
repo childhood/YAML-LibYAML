@@ -1,4 +1,4 @@
-use t::TestYAMLTests tests => 15;
+use t::TestYAMLTests tests => 18;
 use Devel::Peek();
 
 my $rx1 = qr/5050/;
@@ -30,6 +30,15 @@ is $yaml4, <<'...', 'Blessed regexp with flags dumps';
 --- !!perl/regexp:Bossy (?mi-xs:^edcba)
 ...
 
+my $unicode = "\x{100}";
+my $rx5 = qr/\Q$unicode\E/;
+my $yaml5 = Dump $rx5;
+
+is $yaml5, <<"...", 'Unicode regexp dumps';
+--- !!perl/regexp (?-xism:\xC4\x80)
+...
+
+
 my $rx1_ = Load($yaml1);
 is ref($rx1_), 'Regexp', 'Can Load a regular regexp';
 is $rx1_, '(?-xism:5050)', 'Loaded regexp value is correct';
@@ -48,3 +57,7 @@ like "foo\neDcBA\n", $rx3_, 'Loaded regexp with flags works';
 my $rx4_ = Load("--- !!perl/regexp (?msix:123)\n");
 is ref($rx4_), 'Regexp', 'Can Load a regexp with all flags';
 is $rx4_, '(?msix:123)', 'Loaded regexp with all flags value is correct';
+
+my $rx5_ = Load("--- !!perl/regexp (?msix:\xC4\x80)\n");
+is ref($rx5_), 'Regexp', 'Can Load a unicode regexp';
+is $rx5_, "(?msix:\x{100})", 'Loaded unicode regexp value is correct';

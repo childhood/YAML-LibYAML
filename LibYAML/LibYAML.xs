@@ -9,11 +9,11 @@ MODULE = YAML::XS::LibYAML		PACKAGE = YAML::XS::LibYAML
 PROTOTYPES: DISABLE
 
 void
-Load (yaml_str)
-	char *yaml_str
+Load (yaml_sv)
+        SV *yaml_sv
         PPCODE:
         PL_markstack_ptr++;
-        Load(yaml_str);
+        Load(yaml_sv);
         return;
 
 void
@@ -23,3 +23,4 @@ Dump (...)
         PL_markstack_ptr++;
         Dump(dummy);
         return;
+
