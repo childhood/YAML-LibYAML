@@ -150,6 +150,9 @@ Load(SV *yaml_sv)
             YAML_STREAM_START_EVENT
          );
 
+    loader.anchors = newHV();
+    sv_2mortal(loader.anchors);
+
     /* Keep calling load_node until end of stream */
     while (1) {
         loader.document++;
@@ -157,11 +160,10 @@ Load(SV *yaml_sv)
             goto load_error;
         if (loader.event.type == YAML_STREAM_END_EVENT)
             break;
-        loader.anchors = newHV();
         node = load_node(&loader);
-        SvREFCNT_dec((SV *)(loader.anchors));
+        hv_clear(loader.anchors);
         if (! node) break;
-        XPUSHs(node);
+        XPUSHs(sv_2mortal(node));
         if (!yaml_parser_parse(&loader.parser, &loader.event))
             goto load_error;
         if (loader.event.type != YAML_DOCUMENT_END_EVENT)
@@ -475,7 +477,7 @@ Dump(SV *dummy, ...)
     yaml_event_t event_stream_start;
     yaml_event_t event_stream_end;
     int i;
-    SV *yaml = newSVpvn("", 0);
+    SV *yaml = sv_2mortal(newSVpvs(""));
     sp = mark;
 
     set_dumper_options(&dumper);
@@ -495,16 +497,20 @@ Dump(SV *dummy, ...)
     );
     yaml_emitter_emit(&dumper.emitter, &event_stream_start);
 
+    dumper.anchors = newHV();
+    dumper.shadows = newHV();
+
+    sv_2mortal((SV *)dumper.anchors);
+    sv_2mortal((SV *)dumper.shadows);
+
     for (i = 0; i < items; i++) {
         dumper.anchor = 0;
-        dumper.anchors = newHV();
-        dumper.shadows = newHV();
 
         dump_prewalk(&dumper, ST(i));
         dump_document(&dumper, ST(i));
 
-        SvREFCNT_dec((SV *)(dumper.anchors));
-        SvREFCNT_dec((SV *)(dumper.shadows));
+        hv_clear(dumper.anchors);
+        hv_clear(dumper.shadows);
     }
 
     /* End emitting and destroy the emitter object */
@@ -515,7 +521,6 @@ Dump(SV *dummy, ...)
     /* Put the YAML stream scalar on the XS output stack */
     if (yaml) {
         SvUTF8_off(yaml);
-        sv_2mortal(yaml);
         XPUSHs(yaml);
     }
     PUTBACK;
@@ -735,7 +740,7 @@ dump_hash(
     );
     yaml_emitter_emit(&dumper->emitter, &event_mapping_start);
 
-    av = (AV *)sv_2mortal((SV *)newAV());
+    av = newAV();
     for (i = 0; i < len; i++) {
         HE *he = hv_iternext(hash);
         SV *key = hv_iterkeysv(he);
@@ -750,6 +755,8 @@ dump_hash(
         dump_node(dumper, key);
         dump_node(dumper, val);
     }
+
+    SvREFCNT_dec(av);
 
     yaml_mapping_end_event_initialize(&event_mapping_end);
     yaml_emitter_emit(&dumper->emitter, &event_mapping_end);
